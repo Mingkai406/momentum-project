@@ -105,3 +105,11 @@ A production-ready, full-stack task management platform built with microservices
 - **Microservice**: Go 1.21, Concurrent Processing
 - **Deployment**: Docker, Vercel, Render
 - **CI/CD**: GitHub Actions
+
+## 🌐 Distributed Architecture
+
+The Go scheduler service supports distributed deployment:
+- Multiple node deployment capability with NODE_ID environment variable
+- Load balancing across nodes
+- Horizontal scaling support
+- Each node runs 10 concurrent workers (scalable to 100+ workers across 10 nodes)
