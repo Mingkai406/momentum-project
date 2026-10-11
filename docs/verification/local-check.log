@@ -1,0 +1,139 @@
+
+> momentum@3.0.0 check
+> npm run typecheck && npm test && npm run build && npm run test:e2e
+
+
+> momentum@3.0.0 typecheck
+> npm run typecheck -w @momentum/web
+
+
+> @momentum/web@3.0.0 typecheck
+> tsc --noEmit
+
+
+> momentum@3.0.0 test
+> node scripts/test.mjs
+
+TAP version 13
+# Subtest: demo mode fails closed in production or on public interfaces
+ok 1 - demo mode fails closed in production or on public interfaces
+  ---
+  duration_ms: 0.540375
+  ...
+# Subtest: demo tokens verify signature, expiry, issuer and audience
+ok 2 - demo tokens verify signature, expiry, issuer and audience
+  ---
+  duration_ms: 3.389333
+  ...
+# Subtest: Cognito verifier checks real RSA signatures, issuer, client, token type and email verification
+ok 3 - Cognito verifier checks real RSA signatures, issuer, client, token type and email verification
+  ---
+  duration_ms: 179.525917
+  ...
+# Subtest: all business endpoints require authentication; forged credentials rejected
+ok 4 - all business endpoints require authentication; forged credentials rejected
+  ---
+  duration_ms: 43.514042
+  ...
+# Subtest: server owns identities and roles; legacy insecure endpoints are gone
+ok 5 - server owns identities and roles; legacy insecure endpoints are gone
+  ---
+  duration_ms: 17.110834
+  ...
+# Subtest: strangers and mentors cannot read a goal before acceptance
+ok 6 - strangers and mentors cannot read a goal before acceptance
+  ---
+  duration_ms: 11.956708
+  ...
+# Subtest: invitation and acceptance retries do not create duplicate relationships
+ok 7 - invitation and acceptance retries do not create duplicate relationships
+  ---
+  duration_ms: 16.588459
+  ...
+# Subtest: student writes GROW, steps and monthly notes; mentor is read-only
+ok 8 - student writes GROW, steps and monthly notes; mentor is read-only
+  ---
+  duration_ms: 24.620459
+  ...
+# Subtest: validation rejects bad IDs, boolean coercion and invalid months without changing data
+ok 9 - validation rejects bad IDs, boolean coercion and invalid months without changing data
+  ---
+  duration_ms: 5.6885
+  ...
+# Subtest: only accepted mentor can post feedback; concurrent retries insert once
+ok 10 - only accepted mentor can post feedback; concurrent retries insert once
+  ---
+  duration_ms: 17.223166
+  ...
+# Subtest: data survives a fresh API instance and database connection pool
+ok 11 - data survives a fresh API instance and database connection pool
+  ---
+  duration_ms: 10.957583
+  ...
+# Subtest: revocation removes mentor read/write access immediately; student retains feedback
+ok 12 - revocation removes mentor read/write access immediately; student retains feedback
+  ---
+  duration_ms: 7.3435
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 549.592041
+PASS: real PostgreSQL stop/start preserves saved goals
+
+> momentum@3.0.0 build
+> npm run build -w @momentum/web
+
+
+> @momentum/web@3.0.0 build
+> next build
+
+   ▲ Next.js 15.5.27
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 1882ms
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/5) ...
+   Generating static pages (1/5)
+   Generating static pages (2/5)
+   Generating static pages (3/5)
+ ✓ Generating static pages (5/5)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ○ /                                    3.01 kB         133 kB
+├ ○ /_not-found                            987 B         104 kB
+├ ƒ /goals/[id]                          3.13 kB         133 kB
+└ ○ /login                               2.47 kB         133 kB
++ First Load JS shared by all             103 kB
+  ├ chunks/18-25b11e3a132b87ef.js        46.5 kB
+  ├ chunks/87c73c54-24122e7b92478d00.js  54.2 kB
+  └ other shared chunks (total)          1.92 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+
+> momentum@3.0.0 test:e2e
+> playwright test
+
+[WebServer] (node:61082) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:61111) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:61116) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 1 test using 1 worker
+
+  ✓  1 [chromium] › tests/e2e/mentorship.spec.ts:2:5 › student and mentor complete the shared goal workflow, then revoke access (7.1s)
+
+  1 passed (10.9s)

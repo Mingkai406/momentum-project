@@ -1,0 +1,9 @@
+node_modules
+.next
+package-lock.json
+*.sql
+*.png
+*.svg
+Dockerfile
+*.ico
+next-env.d.ts

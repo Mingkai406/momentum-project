@@ -1,24 +1,14 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Providers from './providers';
-
 export const metadata: Metadata = {
-  title: "Momentum - Task Management Platform",
-  description: "Full-stack task manager with real-time scheduling and concurrent processing",
+  title: "Momentum — Make progress together",
+  description:
+    "A shared place for student goals, progress notes and mentor feedback.",
 };
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
-        <Providers>
-          {children}
-        </Providers>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

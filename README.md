@@ -1,115 +1,68 @@
-# Momentum - Distributed Task Management System
+# Momentum
 
-A production-ready, full-stack task management platform built with microservices architecture, featuring real-time scheduling and concurrent processing.
+A shared workspace for student goals and mentor feedback.
 
-## 🚀 Live Demo
+Students turn a goal into a plan, track small steps and record monthly progress. Mentors see the goals of students who have accepted their invitation and leave feedback. Students keep control of their plans and can remove a mentor’s access at any time.
 
-| Service | URL | Status |
-|---------|-----|--------|
-| Frontend | [momentum-frontend-gold.vercel.app](https://momentum-frontend-gold.vercel.app) | ![Vercel](https://img.shields.io/badge/Vercel-Deployed-green) |
-| Backend API | [momentum-backend-m4u6.onrender.com](https://momentum-backend-m4u6.onrender.com) | ![Render](https://img.shields.io/badge/Render-Live-green) |
-| Go Scheduler | [momentum-go-service.onrender.com](https://momentum-go-service.onrender.com) | ![Render](https://img.shields.io/badge/Render-Live-green) |
+![Student goal and mentor feedback](docs/screenshots/mentor-desktop.png)
 
-## 🏗️ Architecture
-## 📦 Source Code
+## Start locally
 
-- **[Frontend Repository](https://github.com/Mingkai406/momentum-frontend)** - Next.js 14, TypeScript, Tailwind CSS
-- **[Backend Repository](https://github.com/Mingkai406/momentum-backend)** - Node.js, Express, PostgreSQL integration
-- **[Go Service Repository](https://github.com/Mingkai406/momentum-go-service)** - Concurrent task processing with Go
+Requires Node.js 20.19+ and npm on macOS or Linux. Docker and an AWS account are not needed for local development.
 
-## ✨ Key Features
+```sh
+git clone https://github.com/Mingkai406/momentum-project.git
+cd momentum-project
+npm ci
+npm run dev
+```
 
-### Frontend
-- **Responsive Design**: Mobile-first approach with Tailwind CSS
-- **Real-time Updates**: Live task status changes
-- **Accessible UI**: ARIA compliant, keyboard navigation
-- **Performance**: Lighthouse score 95+
+Open **http://127.0.0.1:3000**. The command starts Next.js, Express and a local PostgreSQL instance. Local data stays in `.local/` between runs. Press Ctrl+C to stop all three.
 
-### Backend
-- **RESTful API**: Clean endpoint design with proper HTTP methods
-- **Database Ready**: PostgreSQL configuration with connection pooling
-- **Security**: Helmet.js, CORS, rate limiting
-- **Monitoring**: Health checks and structured logging
+Choose **student** to create a goal. In a separate browser tab, choose **mentor** and invite `student@example.test`. Back in the student workspace, accept the invitation. You can now review the goal and share feedback from the mentor workspace.
 
-### Go Microservice
-- **Concurrent Processing**: 10 parallel workers using goroutines
-- **Task Scheduling**: Real-time task queue management
-- **High Performance**: Sub-millisecond scheduling latency
-- **Fault Tolerant**: Graceful error handling and recovery
+These are fictional local accounts, not a public login system. Demo authentication refuses to start in production or on a public interface. Hosted installations use Cognito; see [deployment](docs/DEPLOYMENT.md).
 
-## 🛠️ Technology Stack
+## What you can do
 
-| Layer | Technology | Purpose |
-|-------|------------|---------|
-| Frontend | Next.js 14, React 18 | Server-side rendering, optimal performance |
-| Styling | Tailwind CSS | Utility-first responsive design |
-| Backend | Node.js, Express | RESTful API server |
-| Database | PostgreSQL | ACID-compliant data persistence |
-| Microservice | Go 1.21 | High-performance concurrent processing |
-| Containerization | Docker | Consistent deployment environments |
-| CI/CD | GitHub Actions | Automated testing and deployment |
-| Hosting | Vercel, Render | Auto-scaling cloud infrastructure |
+- Create goals and write a GROW plan: Goal, Reality, Options and Will.
+- Add action steps and mark them complete.
+- Save or revise a monthly check-in.
+- Invite students, accept invitations and revoke access.
+- Read and respond as a mentor without changing a student’s plan.
 
-## 📊 Performance Metrics
+Invitations appear inside the student workspace; this version does not send invitation emails. Lists display the latest 200 visible goals.
 
-- **API Response Time**: < 200ms (P95)
-- **Concurrent Tasks**: 10 parallel workers
-- **Uptime**: 99.9% availability
-- **Frontend Load**: < 2s on 3G networks
+## How it fits together
 
-## 🚦 API Endpoints
-## 🔧 Local Development
-```bash
-# Clone repositories
-git clone https://github.com/Mingkai406/momentum-frontend
-git clone https://github.com/Mingkai406/momentum-backend
-git clone https://github.com/Mingkai406/momentum-go-service
+```text
+apps/web       Next.js · React · TypeScript
+apps/api       Express · verified Cognito identity · access checks
+ database      PostgreSQL schema (fresh v3 database)
+ scripts       local startup, migration and test runners
+ tests         API/auth tests and a browser workflow
+```
 
-# Start services
-cd momentum-frontend && npm install && npm run dev
-cd momentum-backend && npm install && node server.js
-cd momentum-go-service && go run main.go
-cd ~/momentum-project/momentum-project
-cat > README.md << 'EOF'
-# Momentum - Distributed Task Management System
+The frontend sends a signed token with every business request. The API verifies its signature, issuer, audience and expiry, then derives the user and role from that identity. Each goal request checks ownership or an accepted mentor relationship. Only the owner can update a plan; only an accepted mentor can leave feedback. Feedback retries use a unique request ID to avoid duplicate entries.
 
-A production-ready, full-stack task management platform built with microservices architecture, featuring real-time scheduling and concurrent processing.
+## Check it
 
-## 🚀 Live Demo
+```sh
+npm run typecheck
+npm test
+npm run build
+npx playwright install chromium
+npm run test:e2e
+# Or, after installing Chromium:
+npm run check
+```
 
-| Service | URL | Status |
-|---------|-----|--------|
-| Frontend | [momentum-frontend-gold.vercel.app](https://momentum-frontend-gold.vercel.app) | Live |
-| Backend API | [momentum-backend-m4u6.onrender.com](https://momentum-backend-m4u6.onrender.com) | Live |
-| Go Scheduler | [momentum-go-service.onrender.com](https://momentum-go-service.onrender.com) | Live |
+API tests use a disposable **real PostgreSQL** database. Browser tests use separate student, mentor and unrelated-student sessions, including a mobile viewport. Cognito tests verify locally signed RSA tokens against a local JWKS; they do not contact a live AWS user pool.
 
-## 📦 Source Code
+## Project history
 
-- [Frontend Repository](https://github.com/Mingkai406/momentum-frontend) - Next.js + Tailwind CSS
-- [Backend Repository](https://github.com/Mingkai406/momentum-backend) - Node.js + Express
-- [Go Service Repository](https://github.com/Mingkai406/momentum-go-service) - Go Microservice
+Momentum grew out of a Global Student Mentor use case. Its creator reports that an earlier version supported approximately 40 mentees. That is historical use of the earlier application, not adoption of this revision. The former deployment is stopped; this repository does not claim a live public demo.
 
-## ✨ Key Features
+The frontend and backend were imported from their original repositories and consolidated here. Those repositories remain intact. The separate Go scheduler is not part of this application because it was not connected to the mentorship workflow.
 
-- Responsive task management UI with drag-and-drop
-- RESTful API with CRUD operations
-- Real-time task scheduling with Go
-- 10 concurrent workers for parallel processing
-- Docker containerization
-- Production deployment on Vercel and Render
-
-## 🛠️ Technology Stack
-
-- **Frontend**: Next.js 14, React, TypeScript, Tailwind CSS
-- **Backend**: Node.js, Express, PostgreSQL
-- **Microservice**: Go 1.21, Concurrent Processing
-- **Deployment**: Docker, Vercel, Render
-- **CI/CD**: GitHub Actions
-
-## 🌐 Distributed Architecture
-
-The Go scheduler service supports distributed deployment:
-- Multiple node deployment capability with NODE_ID environment variable
-- Load balancing across nodes
-- Horizontal scaling support
-- Each node runs 10 concurrent workers (scalable to 100+ workers across 10 nodes)
+See [source provenance](docs/PROVENANCE.md), [architecture](docs/ARCHITECTURE.md) and [verification](docs/VERIFICATION.md). This revision intentionally uses a fresh database rather than migrating the stopped deployment’s data.

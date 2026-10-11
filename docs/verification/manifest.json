@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-11",
+  "authorization": "Owner selected consolidation of frontend and backend into momentum-project, preserving originals and excluding Go, with workflow, permissions, tests and GitHub push. No deployment or resume edits.",
+  "baseline": "e367422acb2381d579378a909d759464254e011a",
+  "checks": {
+    "npm run check": {
+      "exit_code": 0,
+      "status": "VERIFIED"
+    },
+    "npm audit --json": {
+      "exit_code": 0,
+      "status": "VERIFIED"
+    },
+    "live_aws_deployment": {
+      "status": "PLANNED",
+      "note": "Not part of this change"
+    },
+    "docker_execution": {
+      "status": "UNAVAILABLE",
+      "note": "Local daemon not running"
+    }
+  },
+  "sha256": {
+    "docs/verification/local-check.log": "2afa13a88feb4011f612d628d99859e6b5c20a754a2b4941fe7c9e4cbe499db6",
+    "docs/verification/dependency-audit.json": "83826b5644a24a05349ab3615ee87164c4e3a1ba8d0376bcbce7da0f887e77c8",
+    "package-lock.json": "7c5d7f602c80f21a6482a05b33ebe6162876639c4367f152b5be493ae99135c2",
+    "database/001_initial.sql": "e65ccef6ac819a59ca68374be480a10b69e9378655e74180edff8add3555635a",
+    "apps/api/app.js": "e78b25ecf787817dccf9005165379901043b4c2be2876b11ae1f14609173f7d7",
+    "apps/api/auth.js": "a66171e298784c766b7d47f479d60686f592927b488b81e579a0b46e8d58c604",
+    "tests/api/workflow.test.cjs": "58287a762144eb6a5bf6799d661e8af1b8edba0347f8741283d46a7626daec2f",
+    "tests/e2e/mentorship.spec.ts": "ba0a9a25ee001234469af849bb507df258a38c0b3a931be89a74709546cd62af"
+  },
+  "log_normalization": "Line endings and trailing terminal progress whitespace normalized; message content preserved."
+}

@@ -1,127 +1,49 @@
-# Momentum Current Architecture (Code-Verified)
+# Architecture
 
-Snapshot date: 2026-03-31
+## Decision — 2026-10-11
 
-## 1) Service Boundaries and Responsibilities
+Keep the existing Next.js / Express / PostgreSQL separation, managed as npm workspaces in one repository. Import the frontend and backend, preserve the original repositories, and omit the disconnected Go scheduler. This is the consolidation option selected by the owner on 2026-10-11. Authorized scope: repository integration, core workflow, permissions, tests and GitHub push. No cloud deployment or resume edits are included.
 
-- `momentum-frontend` (Next.js client app)
-  - Handles UI routes (`/login`, `/student/dashboard`, `/mentor/dashboard`)
-  - Performs Cognito sign-up/sign-in/email confirmation on client
-  - Calls backend REST APIs for roles, goals, profile, mentor features
+An alternative was to move every endpoint into Next.js server routes. That would remove one runtime, but replace the existing Express boundary without a product need. Revisit only if maintaining two deployable apps becomes a meaningful burden. The monorepo does not require both apps to be hosted together.
 
-- `momentum-backend` (Express API)
-  - Exposes REST endpoints under `/api/users`, `/api/goals`, `/api/mentor`
-  - Owns PostgreSQL persistence for users/roles/goals/GROW/steps/checkpoints/mentoring
-  - Returns profile aggregates (counts for goals/steps/mentor activity)
+## Current boundaries
 
-- `momentum-go-service` (Go HTTP scheduler)
-  - Exposes `/health`, `/schedule`, `/status`, `/distribute`
-  - Maintains in-memory task list and node metadata (`NODE_ID`)
-  - No DB integration in current code
+Browser → Next.js pages → authenticated Express API → PostgreSQL.
 
-- `momentum-project`
-  - Documentation/meta repository (no runtime service)
+Cognito is the hosted identity provider. Its ID token must match the configured user pool and public client, have a valid signature and expiry, and contain a verified email. Members of the administrator-managed `mentors` group are mentors; other users are students. Users cannot set their own role through an API.
 
-## 2) Frontend -> Backend Integration
+Local startup uses short-lived, signed tokens for fictional accounts. Both services bind to loopback. The API refuses demo auth in production or with a public bind address. No local secret is committed.
 
-### Base URL
+The Express app is created separately from its HTTP listener so tests exercise the same routing and middleware as the running application. Query values are parameterized; input objects reject unknown fields. Mutation rate limits apply per client IP; reverse-proxy trust is disabled by default.
 
-- Primary API wrapper uses:
-  - `const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'`
-  - File: `momentum-frontend/src/lib/api.ts`
+## Access rules
 
-- One direct fetch path bypasses fallback:
-  - `fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/search-by-email`, ...)`
-  - File: `momentum-frontend/src/app/mentor/dashboard/page.tsx`
+| Action                                | Student / owner    | Accepted mentor | Other account |
+| ------------------------------------- | ------------------ | --------------- | ------------- |
+| Read goal, steps, check-ins, feedback | Yes                | Yes             | No            |
+| Change GROW, steps, check-ins         | Yes                | No              | No            |
+| Leave mentor feedback                 | No                 | Yes             | No            |
+| Accept invitation                     | Invited email only | No              | No            |
+| Remove relationship                   | Invited student    | Inviting mentor | No            |
 
-### Routes Called by Frontend
+An invitation alone grants no read access. Acceptance binds the verified email to the student's immutable identity. Deleting a relationship prevents subsequent reads and feedback submissions. It does not delete feedback already provided; the student retains it. Revocation cannot erase data a mentor previously saw or copied.
 
-- User APIs
-  - `POST /api/users/role`
-  - `GET /api/users/:userId/role`
-  - `GET /api/users/:userId/profile`
-  - `POST /api/users/search-by-email` (used directly in mentor dashboard)
+## Data and failure behavior
 
-- Goal APIs
-  - `GET /api/goals/user/:userId`
-  - `POST /api/goals`
-  - `GET /api/goals/:goalId/grow`
-  - `POST /api/goals/:goalId/grow`
-  - `GET /api/goals/:goalId/steps`
-  - `POST /api/goals/:goalId/steps`
-  - `PATCH /api/goals/steps/:stepId`
+- Users, goals, plans, steps, monthly notes, relationships and feedback are persisted in PostgreSQL.
+- GROW and month-specific check-ins use unique keys and atomic upserts. Retrying a save replaces the same record.
+- Invitations are unique per mentor and student email. Retrying does not create extra connections.
+- Feedback carries a UUID request ID, unique per mentor. Same ID and content returns the original record; different content returns 409. The browser keeps the ID after a failed request so retry does not create a second entry.
+- Goal/step creation is not automatically retried; UI controls disable while a request is pending. It is not advertised as exactly-once creation.
+- Health checks query the database and return 503 when unavailable. Unexpected errors return a generic response with a request ID; tokens, goal content and database details are not logged.
+- Requests have a 32 KB body limit, field limits and database statement/connection timeouts. Goal lists currently cap at 200; pagination is a future extension.
 
-- Mentor APIs
-  - `GET /api/mentor/:mentorId/mentees`
-  - `GET /api/mentor/mentee/:menteeId/goals`
-  - `GET /api/mentor/goal/:goalId/details`
-  - `POST /api/mentor/feedback`
-  - `POST /api/mentor/relationship`
+## Compatibility and rollback
 
-### Auth Flow (Current)
+The old deployment is stopped and the owner explicitly allowed discarding its data. This revision uses a new v3 schema and replaces legacy API routes; no compatibility with an old running frontend or database is promised. Do not point it at the old database.
 
-- Frontend uses Cognito directly (`amazon-cognito-identity-js`): sign-up, confirm code, sign-in.
-- After sign-in, frontend decodes Cognito ID token payload to obtain `sub` (user ID).
-- Frontend then calls backend user-role endpoints with `user_id` and `email`.
-- Backend currently does not validate Cognito JWTs on incoming API requests; no auth middleware found.
+Original source commits are listed in PROVENANCE.md. The import commits retain the original snapshots in Git history. Roll back code by reverting the integration commit or checking out the pre-integration revision. Stop the new services before rollback; retain the new database separately. There is no destructive down migration and no production database was touched.
 
-## 3) Backend <-> Go Service Integration (Current Reality)
+## Verification targets and limits
 
-- No active HTTP calls from `momentum-backend` to `momentum-go-service` were found.
-- No queue/worker/scheduled-job integration found in backend code.
-- No shared datastore path found:
-  - Backend uses PostgreSQL (`pg`)
-  - Go service uses in-memory slices only
-- Legacy clue: `momentum-backend/server.js.backup` contains an old `/api/schedule` stub, but this file is not used by current `server.js`.
-
-## 4) Data Model Overview
-
-Defined in: `momentum-backend/migrations/001_create_gsm_tables.sql`
-
-- `user_roles`
-  - Maps Cognito `user_id` + `email` to role (`student`/`mentor`)
-  - Used by `routes/users.js`, `routes/mentor.js`
-
-- `mentor_mentee`
-  - Relationship table between mentor and mentee user IDs
-  - Used by `routes/mentor.js`, mentor stats in `routes/users.js`
-
-- `goals`
-  - User goals (`goal_number`, title/description/category)
-  - Used by `routes/goals.js`, `routes/mentor.js`, profile aggregates in `routes/users.js`
-
-- `grow_analysis`
-  - Goal-level GROW text fields
-  - Used by `routes/goals.js`, `routes/mentor.js`
-
-- `action_steps`
-  - Ordered steps per goal + completion state
-  - Used by `routes/goals.js`, `routes/mentor.js`, profile aggregates in `routes/users.js`
-
-- `monthly_checkpoints`
-  - Month-level checkpoints/progress notes per goal
-  - Used by `routes/goals.js`, `routes/mentor.js`
-
-- `mentor_feedback`
-  - Mentor comments attached to goals
-  - Used by `routes/mentor.js`, mentor stats in `routes/users.js`
-
-## 5) System Diagram (Text)
-
-```text
-[Browser]
-   |
-   v
-[Next.js Frontend (momentum-frontend)]
-   |  REST calls to /api/*
-   v
-[Express Backend (momentum-backend)]
-   |  SQL via pg
-   v
-[PostgreSQL]
-
-[Go Service (momentum-go-service)]
-   - Standalone HTTP service (/health, /schedule, /status, /distribute)
-   - In-memory task state
-   - No active integration path to backend/frontend in current code
-```
+Access isolation, acceptance, revocation, concurrent feedback deduplication, migration reapplication, persisted state across API reconnection and the student/mentor browser journey are exercised by tests. Timing/traffic/SLO targets are UNKNOWN: no load-test or uptime claims are made. Live Cognito configuration, hosted TLS, backups, recovery and external email delivery remain deployment work. See VERIFICATION.md for executed checks.

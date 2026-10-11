@@ -1,79 +1,91 @@
-import { CognitoUserPool, CognitoUser, AuthenticationDetails, CognitoUserAttribute } from 'amazon-cognito-identity-js';
-
-const poolData = {
-  UserPoolId: 'us-east-1_B6UiZN14A',
-  ClientId: '6u193vnn6mhm60oo4mgd456kp1'
-};
-
-const userPool = new CognitoUserPool(poolData);
-
-export const signUp = (email: string, password: string) => {
-  return new Promise((resolve, reject) => {
-    const attributeList = [
-      new CognitoUserAttribute({ Name: 'email', Value: email })
-    ];
-    
-    userPool.signUp(email, password, attributeList, [], (err, result) => {
-      if (err) {
-        reject(err);
+import {
+  CognitoUserPool,
+  CognitoUser,
+  AuthenticationDetails,
+  CognitoUserAttribute,
+  CognitoUserSession,
+} from "amazon-cognito-identity-js";
+function pool() {
+  const UserPoolId = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID;
+  const ClientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID;
+  if (!UserPoolId || !ClientId) throw new Error("Cognito is not configured");
+  return new CognitoUserPool({
+    UserPoolId,
+    ClientId,
+    Storage: window.sessionStorage,
+  });
+}
+export async function getToken(): Promise<string | null> {
+  const demo = sessionStorage.getItem("momentum-demo");
+  if (demo) return demo;
+  if (!process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID) return null;
+  const user = pool().getCurrentUser();
+  if (!user) return null;
+  return new Promise((resolve, reject) =>
+    user.getSession((error: Error | null, session: CognitoUserSession) => {
+      if (error) {
+        user.signOut();
+        resolve(null);
         return;
       }
-      resolve(result);
-    });
-  });
-};
-
-export const confirmSignUp = (email: string, code: string) => {
-  return new Promise((resolve, reject) => {
-    const cognitoUser = new CognitoUser({
-      Username: email,
-      Pool: userPool
-    });
-    
-    cognitoUser.confirmRegistration(code, true, (err, result) => {
-      if (err) {
-        reject(err);
+      if (!session?.isValid()) {
+        reject(new Error("Please sign in again"));
         return;
       }
-      resolve(result);
-    });
+      resolve(session.getIdToken().getJwtToken());
+    }),
+  );
+}
+export async function signIn(email: string, password: string): Promise<void> {
+  const user = new CognitoUser({
+    Username: email,
+    Pool: pool(),
+    Storage: window.sessionStorage,
   });
-};
-
-export const signIn = (email: string, password: string) => {
-  return new Promise((resolve, reject) => {
-    const authenticationDetails = new AuthenticationDetails({
-      Username: email,
-      Password: password
-    });
-    
-    const cognitoUser = new CognitoUser({
-      Username: email,
-      Pool: userPool
-    });
-    
-    cognitoUser.authenticateUser(authenticationDetails, {
-      onSuccess: (result) => {
-        resolve({
-          accessToken: result.getAccessToken().getJwtToken(),
-          idToken: result.getIdToken().getJwtToken(),
-          refreshToken: result.getRefreshToken().getToken()
-        });
+  return new Promise((resolve, reject) =>
+    user.authenticateUser(
+      new AuthenticationDetails({ Username: email, Password: password }),
+      {
+        onSuccess: () => {
+          sessionStorage.removeItem("momentum-demo");
+          resolve();
+        },
+        onFailure: reject,
+        newPasswordRequired: () =>
+          reject(
+            new Error(
+              "Complete the password reset with your administrator before signing in.",
+            ),
+          ),
       },
-      onFailure: (err) => {
-        reject(err);
-      }
-    });
-  });
-};
-
-export const signOut = () => {
-  const cognitoUser = userPool.getCurrentUser();
-  if (cognitoUser) {
-    cognitoUser.signOut();
-  }
-};
-
-export const getCurrentUser = () => {
-  return userPool.getCurrentUser();
-};
+    ),
+  );
+}
+export async function signUp(email: string, password: string): Promise<void> {
+  return new Promise((resolve, reject) =>
+    pool().signUp(
+      email,
+      password,
+      [new CognitoUserAttribute({ Name: "email", Value: email })],
+      [],
+      (error) => (error ? reject(error) : resolve()),
+    ),
+  );
+}
+export async function confirm(email: string, code: string): Promise<void> {
+  return new Promise((resolve, reject) =>
+    new CognitoUser({
+      Username: email,
+      Pool: pool(),
+      Storage: window.sessionStorage,
+    }).confirmRegistration(code, true, (error) =>
+      error ? reject(error) : resolve(),
+    ),
+  );
+}
+export function signOut() {
+  sessionStorage.removeItem("momentum-demo");
+  if (process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID)
+    pool().getCurrentUser()?.signOut();
+  window.location.assign("/login");
+}

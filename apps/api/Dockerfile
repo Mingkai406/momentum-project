@@ -1,15 +1,13 @@
-FROM node:18-alpine
-
+FROM node:22-bookworm-slim
 WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci --only=production
-
-COPY . .
-
+COPY package.json package-lock.json ./
+COPY apps/api/package.json apps/api/package.json
+COPY apps/web/package.json apps/web/package.json
+RUN npm ci --omit=dev --workspace=@momentum/api --ignore-scripts && npm cache clean --force
+COPY apps/api apps/api
+COPY database database
+COPY scripts/migrate.cjs scripts/migrate.cjs
+USER node
+ENV NODE_ENV=production HOST=0.0.0.0 PORT=3001
 EXPOSE 3001
-
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3001/', (r) => {r.statusCode === 200 ? process.exit(0) : process.exit(1)})"
-
-CMD ["node", "server.js"]
+CMD ["node", "apps/api/server.js"]
