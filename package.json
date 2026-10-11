@@ -15,8 +15,11 @@
     "test": "node scripts/test.mjs",
     "test:e2e": "playwright test",
     "check": "npm run typecheck && npm test && npm run build && npm run test:e2e",
-    "format": "prettier --write apps scripts tests playwright.config.ts database docs README.md .github/workflows/ci.yml",
-    "format:check": "prettier --check apps scripts tests playwright.config.ts docs README.md .github/workflows/ci.yml"
+    "format": "prettier --write apps scripts tests playwright*.config.ts database docs README.md .github/workflows",
+    "format:check": "prettier --check apps scripts tests playwright*.config.ts docs README.md .github/workflows",
+    "build:preview": "node scripts/build-preview.mjs",
+    "test:preview": "playwright test -c playwright.preview.config.ts",
+    "serve:preview": "node scripts/serve-preview.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0",

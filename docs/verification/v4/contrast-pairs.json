@@ -1,0 +1,58 @@
+{
+  "pairs": [
+    {
+      "fg": "#20242c",
+      "bg": "#f5f6f8",
+      "fg_name": "Main text",
+      "role": "body"
+    },
+    {
+      "fg": "#646d7b",
+      "bg": "#f5f6f8",
+      "fg_name": "Secondary text",
+      "role": "body"
+    },
+    {
+      "fg": "#20242c",
+      "bg": "#ffffff",
+      "fg_name": "Surface text",
+      "role": "body"
+    },
+    {
+      "fg": "#646d7b",
+      "bg": "#ffffff",
+      "fg_name": "Surface secondary",
+      "role": "body"
+    },
+    {
+      "fg": "#2858d9",
+      "bg": "#f5f6f8",
+      "fg_name": "Link",
+      "role": "body"
+    },
+    {
+      "fg": "#ffffff",
+      "bg": "#2858d9",
+      "fg_name": "Button",
+      "role": "body"
+    },
+    {
+      "fg": "#ffffff",
+      "bg": "#181b22",
+      "fg_name": "Sidebar text",
+      "role": "body"
+    },
+    {
+      "fg": "#a7afbd",
+      "bg": "#181b22",
+      "fg_name": "Sidebar secondary",
+      "role": "body"
+    },
+    {
+      "fg": "#b8c0ce",
+      "bg": "#181b22",
+      "fg_name": "Sidebar navigation",
+      "role": "body"
+    }
+  ]
+}

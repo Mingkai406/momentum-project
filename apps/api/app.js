@@ -78,7 +78,7 @@ function createApp({ pool, auth, origin = "http://localhost:3000" }) {
   }
   async function goalAccess(req, goalId, write = false) {
     const { rows } = await pool.query(
-      `SELECT g.* FROM goals g WHERE g.id=$1 AND
+      `SELECT g.*,u.email AS owner_email FROM goals g JOIN users u ON u.id=g.owner_id WHERE g.id=$1 AND
       (g.owner_id=$2 OR ($3::boolean AND EXISTS(SELECT 1 FROM relationships r
        WHERE r.mentor_id=$2 AND r.student_id=g.owner_id AND r.status='accepted')))`,
       [id.parse(goalId), req.user.id, !write && req.user.role === "mentor"],
@@ -88,6 +88,46 @@ function createApp({ pool, auth, origin = "http://localhost:3000" }) {
     return rows[0];
   }
   app.get("/api/me", (req, res) => res.json(req.user));
+  app.get("/api/overview", async (req, res) => {
+    const visible = `WITH visible AS (SELECT g.* FROM goals g WHERE g.owner_id=$1 OR
+      ($2::boolean AND EXISTS(SELECT 1 FROM relationships r WHERE r.mentor_id=$1 AND r.student_id=g.owner_id AND r.status='accepted'))) `;
+    const params = [req.user.id, req.user.role === "mentor"];
+    const [stats, feedback, checkpoints, steps] = await Promise.all([
+      pool.query(
+        visible +
+          `SELECT (SELECT count(*)::int FROM visible) AS goals,
+        (SELECT count(*)::int FROM steps s JOIN visible g ON g.id=s.goal_id) AS steps,
+        (SELECT count(*)::int FROM steps s JOIN visible g ON g.id=s.goal_id WHERE s.completed) AS completed_steps,
+        (SELECT count(*)::int FROM feedback f JOIN visible g ON g.id=f.goal_id) AS feedback`,
+        params,
+      ),
+      pool.query(
+        visible +
+          `SELECT f.id,f.goal_id,f.body,f.created_at,g.title,u.email AS mentor_email
+        FROM feedback f JOIN visible g ON g.id=f.goal_id JOIN users u ON u.id=f.mentor_id ORDER BY f.created_at DESC,f.id DESC LIMIT 6`,
+        params,
+      ),
+      pool.query(
+        visible +
+          `SELECT c.id,c.goal_id,c.notes,c.month,c.updated_at,g.title FROM checkpoints c
+        JOIN visible g ON g.id=c.goal_id ORDER BY c.updated_at DESC,c.id DESC LIMIT 6`,
+        params,
+      ),
+      pool.query(
+        visible +
+          `SELECT s.id,s.goal_id,s.description,g.title FROM steps s JOIN visible g ON g.id=s.goal_id
+        WHERE NOT s.completed ORDER BY s.id DESC LIMIT 5`,
+        params,
+      ),
+    ]);
+    res.json({
+      stats: stats.rows[0],
+      feedback: feedback.rows,
+      checkpoints: checkpoints.rows,
+      nextSteps: steps.rows,
+    });
+  });
+
   app.get("/api/relationships", async (req, res) => {
     const { rows } = await pool.query(
       `SELECT r.*,u.email AS mentor_email FROM relationships r JOIN users u ON u.id=r.mentor_id

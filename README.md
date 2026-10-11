@@ -1,14 +1,68 @@
 # Momentum
 
-A shared workspace for student goals and mentor feedback.
+**Goals, progress and mentor feedback in one workspace.**
 
-Students turn a goal into a plan, track small steps and record monthly progress. Mentors see the goals of students who have accepted their invitation and leave feedback. Students keep control of their plans and can remove a mentor’s access at any time.
+[Try the live demo →](https://mingkai406.github.io/momentum-project/welcome/) · [Architecture](docs/ARCHITECTURE.md) · [Run locally](#run-the-full-application-locally)
 
-![Student goal and mentor feedback](docs/screenshots/mentor-desktop.png)
+I built Momentum around my work as a Global Student Mentor. An earlier version supported approximately **40 mentees**. This rebuild brings the frontend and backend together and focuses on what happens between mentoring conversations: setting a clear goal, following through on small steps, and knowing when to ask for help.
 
-## Start locally
+![Momentum overview](docs/screenshots/overview-desktop.png)
 
-Requires Node.js 20.19+ and npm on macOS or Linux. Docker and an AWS account are not needed for local development.
+## Take a look
+
+The [public demo](https://mingkai406.github.io/momentum-project/welcome/) opens without an account. Choose **student** to explore a populated workspace, or **mentor** to read plans and leave feedback. Try creating a goal, completing a step and recording a check-in, then switch roles to see the other side.
+
+The demo uses fictional examples stored in your browser. Changes survive a refresh; **Reset demo** restores the examples. It does not create real accounts, synchronize across devices or contact the backend. The approximately 40 mentees belong to the earlier application, not this public demo.
+
+## The workflow
+
+| Workspace              | What it makes easier                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------------ |
+| **Overview**           | See goals, completed steps, upcoming actions and recent conversations together.      |
+| **Goals**              | Search and filter goals, then open the plan, action steps or monthly check-ins.      |
+| **Mentors / Students** | Invite a student, accept a connection and remove access when it is no longer needed. |
+| **Updates**            | Find the latest check-ins and mentor feedback without opening every goal.            |
+
+A student's plan uses **GROW**: Goal, Reality, Options and Will. Students own their plans and progress records. Mentors can read and respond after the student accepts their invitation, but cannot rewrite the student's work.
+
+![Goal detail with action steps and feedback](docs/screenshots/goal-desktop.png)
+
+<details>
+<summary>Mobile view</summary>
+<br />
+<img src="docs/screenshots/overview-mobile.png" width="320" alt="Momentum overview on a phone" />
+</details>
+
+## Engineering
+
+The public playground and the full application share the same Next.js interface. The playground uses a browser-only data adapter; the full application sends authenticated requests to Express and PostgreSQL.
+
+```mermaid
+flowchart LR
+    UI[Next.js · React · TypeScript] --> Mode{Build mode}
+    Mode -->|Full application| API[Express API]
+    API --> Auth[Cognito identity verification]
+    API --> DB[(PostgreSQL)]
+    Mode -->|Public playground| Local[Browser-local fictional data]
+```
+
+- **Authorization at the API boundary.** Each goal request checks its owner or an accepted mentor relationship. Roles come from verified identity, not a field submitted by the browser. The overview applies the same visibility rules to counts and recent activity.
+- **Predictable writes.** Monthly check-ins and GROW plans use atomic upserts. Feedback uses a request ID so a retried submission does not create a second comment. Schema application runs in a transaction under an advisory lock.
+- **Permission tests with real storage.** Integration tests use disposable PostgreSQL, including access revocation, cross-account writes, concurrent feedback retries and persistence across a database restart.
+- **Two browser journeys.** The full-app test uses independent student, mentor and unrelated-student sessions. Playground tests cover editing, role switching, browser isolation, reset, keyboard focus and three viewport sizes.
+
+| Layer                       | Technology                                         |
+| --------------------------- | -------------------------------------------------- |
+| Web                         | Next.js 15, React 19, TypeScript, responsive CSS   |
+| API                         | Node.js, Express 5, Zod, parameterized SQL         |
+| Storage                     | PostgreSQL                                         |
+| Hosted identity integration | Amazon Cognito, verified JWTs                      |
+| Tests                       | Node test runner, Supertest, Playwright / Chromium |
+| Public hosting              | GitHub Pages, static export, GitHub Actions        |
+
+## Run the full application locally
+
+Requires Node.js 20.19+ and npm on macOS or Linux. No Docker or AWS account is needed for the local workflow.
 
 ```sh
 git clone https://github.com/Mingkai406/momentum-project.git
@@ -17,52 +71,41 @@ npm ci
 npm run dev
 ```
 
-Open **http://127.0.0.1:3000**. The command starts Next.js, Express and a local PostgreSQL instance. Local data stays in `.local/` between runs. Press Ctrl+C to stop all three.
+Then open `http://127.0.0.1:3000` **on the same computer**. This address works only while the local server is running. For a shareable website, use the live demo link above.
 
-Choose **student** to create a goal. In a separate browser tab, choose **mentor** and invite `student@example.test`. Back in the student workspace, accept the invitation. You can now review the goal and share feedback from the mentor workspace.
+One command starts Next.js, Express and PostgreSQL. Data stays in the ignored `.local/` directory between runs. Ctrl+C stops all three. To try a real API-backed mentoring flow:
 
-These are fictional local accounts, not a public login system. Demo authentication refuses to start in production or on a public interface. Hosted installations use Cognito; see [deployment](docs/DEPLOYMENT.md).
+1. Choose **student**, create a goal and add a step.
+2. Open a separate tab, choose **mentor**, and invite `student@example.test` under **Students**.
+3. Return to the student tab, reload **Mentors**, and accept the invitation.
+4. Reload the mentor's goal list, open the goal and leave feedback.
+5. Remove the connection as the student and verify that the mentor can no longer open the goal.
 
-## What you can do
+Local accounts are fictional and use signed, short-lived tokens. The API refuses local demo authentication on a public interface or in production. Real hosted accounts use the Cognito integration described in [deployment](docs/DEPLOYMENT.md).
 
-- Create goals and write a GROW plan: Goal, Reality, Options and Will.
-- Add action steps and mark them complete.
-- Save or revise a monthly check-in.
-- Invite students, accept invitations and revoke access.
-- Read and respond as a mentor without changing a student’s plan.
-
-Invitations appear inside the student workspace; this version does not send invitation emails. Lists display the latest 200 visible goals.
-
-## How it fits together
-
-```text
-apps/web       Next.js · React · TypeScript
-apps/api       Express · verified Cognito identity · access checks
- database      PostgreSQL schema (fresh v3 database)
- scripts       local startup, migration and test runners
- tests         API/auth tests and a browser workflow
-```
-
-The frontend sends a signed token with every business request. The API verifies its signature, issuer, audience and expiry, then derives the user and role from that identity. Each goal request checks ownership or an accepted mentor relationship. Only the owner can update a plan; only an accepted mentor can leave feedback. Feedback retries use a unique request ID to avoid duplicate entries.
-
-## Check it
+## Run checks
 
 ```sh
-npm run typecheck
-npm test
-npm run build
 npx playwright install chromium
-npm run test:e2e
-# Or, after installing Chromium:
-npm run check
+npm run check          # types, API/auth, production build, full-app browser journey
+npm run build:preview  # static site for the public demo
+npm run test:preview   # demo behavior and responsive checks
+npm run format:check
 ```
 
-API tests use a disposable **real PostgreSQL** database. Browser tests use separate student, mentor and unrelated-student sessions, including a mobile viewport. Cognito tests verify locally signed RSA tokens against a local JWKS; they do not contact a live AWS user pool.
+GitHub Actions verifies the full application and tests the static export before publishing it. See [verification results](docs/VERIFICATION.md) for scope and limitations.
 
-## Project history
+## Repository map
 
-Momentum grew out of a Global Student Mentor use case. Its creator reports that an earlier version supported approximately 40 mentees. That is historical use of the earlier application, not adoption of this revision. The former deployment is stopped; this repository does not claim a live public demo.
+```text
+apps/web/       Interface, authentication client and public demo adapter
+apps/api/       Express routes, authorization and database access
+ database/      PostgreSQL schema
+ scripts/       Local startup, migration, test and export runners
+ tests/         API/auth, full-app browser and public-demo tests
+ docs/          Architecture, deployment, provenance and screenshots
+```
 
-The frontend and backend were imported from their original repositories and consolidated here. Those repositories remain intact. The separate Go scheduler is not part of this application because it was not connected to the mentorship workflow.
+The original frontend and backend repositories were imported with their history recorded here; they remain available separately. The standalone Go scheduler was not connected to this workflow and is excluded from the rebuild. [Source provenance →](docs/PROVENANCE.md)
 
-See [source provenance](docs/PROVENANCE.md), [architecture](docs/ARCHITECTURE.md) and [verification](docs/VERIFICATION.md). This revision intentionally uses a fresh database rather than migrating the stopped deployment’s data.
+Current limits: invitations appear in the app without sending email; goal lists show up to 200 records; the public site is a browser-local demo. Hosting the real backend, configuring a live Cognito pool and arranging backups are separate deployment steps. The old AWS deployment remains stopped.

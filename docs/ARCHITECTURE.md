@@ -2,7 +2,7 @@
 
 ## Decision — 2026-10-11
 
-Keep the existing Next.js / Express / PostgreSQL separation, managed as npm workspaces in one repository. Import the frontend and backend, preserve the original repositories, and omit the disconnected Go scheduler. This is the consolidation option selected by the owner on 2026-10-11. Authorized scope: repository integration, core workflow, permissions, tests and GitHub push. No cloud deployment or resume edits are included.
+Keep the existing Next.js / Express / PostgreSQL separation, managed as npm workspaces in one repository. Import the frontend and backend, preserve the original repositories, and omit the disconnected Go scheduler. This is the consolidation option selected by the owner on 2026-10-11. Authorized scope: repository integration, core workflow, permissions, tests and GitHub push. The subsequent UI and deployment request adds a free GitHub Pages playground. Resume changes and paid AWS resources are excluded.
 
 An alternative was to move every endpoint into Next.js server routes. That would remove one runtime, but replace the existing Express boundary without a product need. Revisit only if maintaining two deployable apps becomes a meaningful burden. The monorepo does not require both apps to be hosted together.
 
@@ -47,3 +47,9 @@ Original source commits are listed in PROVENANCE.md. The import commits retain t
 ## Verification targets and limits
 
 Access isolation, acceptance, revocation, concurrent feedback deduplication, migration reapplication, persisted state across API reconnection and the student/mentor browser journey are exercised by tests. Timing/traffic/SLO targets are UNKNOWN: no load-test or uptime claims are made. Live Cognito configuration, hosted TLS, backups, recovery and external email delivery remain deployment work. See VERIFICATION.md for executed checks.
+
+## Public playground — 2026-10-11
+
+The owner selected a free public demo. `NEXT_PUBLIC_PLAYGROUND=true` builds the same pages as a Next.js static export for GitHub Pages. `preview-api.ts` replaces network requests with fictional records in localStorage; the selected role is tab-local sessionStorage. This is an interactive product demonstration, not a security boundary or multi-user backend. It never sends visitor-entered goal text to the Express API. Refresh preserves local edits; reset restores fixtures. Separate browsers have separate data.
+
+The full application remains the default build and uses the real API. Goal detail uses `/goal/?id=...` so created goals work in both hosting modes without pre-generating an HTML file for each ID. The live playground has no AWS connection or paid compute.

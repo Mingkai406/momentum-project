@@ -9,9 +9,8 @@ test("student and mentor complete the shared goal workflow, then revoke access",
   const mentor = await mentorContext.newPage();
   const stranger = await strangerContext.newPage();
   await student.goto("/login");
-  await student
-    .getByRole("button", { name: "Continue as student", exact: true })
-    .click();
+  await student.getByRole("button", { name: /^Continue as student/ }).click();
+  await student.getByRole("button", { name: "New goal", exact: true }).click();
   await student.getByLabel("Goal title").fill("Build a useful portfolio");
   await student
     .getByLabel("Why it matters")
@@ -20,8 +19,13 @@ test("student and mentor complete the shared goal workflow, then revoke access",
     .getByRole("button", { name: "Create goal", exact: true })
     .click();
   await student.getByRole("link", { name: /Build a useful portfolio/ }).click();
-  await student.waitForURL("**/goals/*");
+  await student.waitForURL(
+    (url) =>
+      url.pathname.replace(/\/$/, "") === "/goal" &&
+      !!url.searchParams.get("id"),
+  );
   const goalUrl = student.url();
+  await student.getByRole("tab", { name: "GROW plan" }).click();
   await student
     .getByLabel("Goal — what do you want?")
     .fill("Ship a complete web application");
@@ -33,34 +37,44 @@ test("student and mentor complete the shared goal workflow, then revoke access",
   await student
     .getByLabel("Reality — where are you now?")
     .fill("Unsaved reflection");
+  await student.getByRole("tab", { name: /Action steps/ }).click();
   await student.getByLabel("Next action").fill("Write permission tests");
   await student.getByRole("button", { name: "Add step" }).click();
   await student
     .getByRole("checkbox", { name: "Write permission tests" })
     .check();
   await expect(student.getByRole("status")).toHaveText("Step updated.");
+  await student.getByRole("tab", { name: "GROW plan" }).click();
   await expect(student.getByLabel("Reality — where are you now?")).toHaveValue(
     "Unsaved reflection",
   );
+  await student.getByRole("tab", { name: /Check-ins/ }).click();
+  await student.getByRole("button", { name: "Write check-in" }).click();
   await student.getByLabel("Progress notes").fill("The API is working.");
   await student.getByRole("button", { name: "Save check-in" }).click();
   await expect(student.getByRole("status")).toHaveText("Check-in saved.");
   await mentor.goto("/login");
-  await mentor
-    .getByRole("button", { name: "Continue as mentor", exact: true })
-    .click();
+  await mentor.getByRole("button", { name: /^Continue as mentor/ }).click();
+  await mentor.getByRole("link", { name: "Students", exact: true }).click();
   await mentor.getByLabel("Student email").fill("student@example.test");
   await mentor.getByRole("button", { name: "Invite student" }).click();
   await expect(mentor.getByRole("status")).toContainText("Invitation added");
   await expect(
     mentor.getByRole("link", { name: /Build a useful portfolio/ }),
   ).toHaveCount(0);
-  await student.goto("/");
+  await student.goto("/?view=people");
   await student.getByRole("button", { name: "Accept invitation" }).click();
   await expect(student.getByRole("status")).toHaveText("Invitation accepted.");
-  await mentor.reload();
+  await mentor.goto("/?view=goals");
   await mentor.getByRole("link", { name: /Build a useful portfolio/ }).click();
-  await expect(mentor.getByLabel("Goal — what do you want?")).toBeDisabled();
+  await mentor.getByRole("tab", { name: "GROW plan" }).click();
+  await expect(
+    mentor.getByText("Ship a complete web application", { exact: true }),
+  ).toBeVisible();
+  await expect(mentor.getByRole("button", { name: "Save plan" })).toHaveCount(
+    0,
+  );
+  await mentor.getByRole("tab", { name: /Action steps/ }).click();
   await expect(
     mentor.getByRole("checkbox", { name: "Write permission tests" }),
   ).toBeChecked();
@@ -81,7 +95,7 @@ test("student and mentor complete the shared goal workflow, then revoke access",
     .getByRole("button", { name: "Continue as another student" })
     .click();
   await expect(
-    stranger.getByRole("heading", { name: "What’s your next step?" }),
+    stranger.getByRole("heading", { name: "Your overview", exact: true }),
   ).toBeVisible();
   await stranger.goto(goalUrl);
   await expect(
@@ -101,7 +115,7 @@ test("student and mentor complete the shared goal workflow, then revoke access",
     path: "test-results/mentor-desktop.png",
     fullPage: true,
   });
-  await student.goto("/");
+  await student.goto("/?view=people");
   student.on("dialog", (dialog) => dialog.accept());
   await student.getByRole("button", { name: "Remove access" }).click();
   await expect(student.getByRole("status")).toHaveText("Connection removed.");

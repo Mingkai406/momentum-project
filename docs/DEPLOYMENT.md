@@ -1,6 +1,16 @@
 # Deployment
 
-The local workflow runs without cloud resources. This task does not create an AWS user pool, database, public endpoint or paid resources.
+## Public demo
+
+[Open Momentum](https://mingkai406.github.io/momentum-project/welcome/). This is a static GitHub Pages deployment, using fictional browser-local data. It has no real-account backend, AWS user pool or paid cloud resources.
+
+`.github/workflows/pages.yml` builds the static export, runs the public-demo Playwright tests and publishes only after they pass. GitHub Pages must use **GitHub Actions** as its publishing source. `npm run build:preview` sets the `/momentum-project` base path; the output is `apps/web/out`. To inspect the export locally, run `npm run serve:preview` and open the printed URL.
+
+The implementation follows [GitHub custom Pages workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages) and [Next.js static exports](https://nextjs.org/docs/app/guides/static-exports), checked 2026-10-11.
+
+## Full backend hosting (not deployed)
+
+The local workflow runs without cloud resources. The following describes a future real-account installation.
 
 ## Hosted configuration
 

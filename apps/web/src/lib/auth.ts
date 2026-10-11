@@ -87,5 +87,5 @@ export function signOut() {
   sessionStorage.removeItem("momentum-demo");
   if (process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID)
     pool().getCurrentUser()?.signOut();
-  window.location.assign("/login");
+  window.location.assign(`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/login/`);
 }

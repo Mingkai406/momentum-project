@@ -6,6 +6,10 @@ export async function api<T>(
   init: RequestInit = {},
   anonymous = false,
 ): Promise<T> {
+  if (process.env.NEXT_PUBLIC_PLAYGROUND === "true") {
+    const { previewApi } = await import("./preview-api");
+    return previewApi<T>(path, init);
+  }
   const token = anonymous ? null : await getToken();
   const response = await fetch(`${API_URL}/api${path}`, {
     ...init,
@@ -18,7 +22,9 @@ export async function api<T>(
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
     if (response.status === 401 && !anonymous) {
-      window.location.assign("/login");
+      window.location.assign(
+        `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/login/`,
+      );
     }
     throw new Error(body.error || "Unable to complete request");
   }
@@ -53,11 +59,46 @@ export type Grow = {
 export type Detail = Goal & {
   grow: Grow;
   steps: { id: number; description: string; completed: boolean }[];
-  checkpoints: { id: number; month: string; notes: string }[];
+  checkpoints: {
+    id: number;
+    month: string;
+    updated_at?: string;
+    notes: string;
+  }[];
   feedback: {
     id: number;
     mentor_email: string;
     body: string;
     created_at: string;
+  }[];
+};
+export type Overview = {
+  stats: {
+    goals: number;
+    steps: number;
+    completed_steps: number;
+    feedback: number;
+  };
+  feedback: {
+    id: number;
+    goal_id: number;
+    body: string;
+    created_at: string;
+    title: string;
+    mentor_email: string;
+  }[];
+  checkpoints: {
+    id: number;
+    goal_id: number;
+    notes: string;
+    month: string;
+    updated_at: string;
+    title: string;
+  }[];
+  nextSteps: {
+    id: number;
+    goal_id: number;
+    description: string;
+    title: string;
   }[];
 };

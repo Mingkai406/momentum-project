@@ -30,6 +30,7 @@ before(async () => {
 after(() => pool.end());
 test("all business endpoints require authentication; forged credentials rejected", async () => {
   await call(null, "get", "/goals").expect(401);
+  await call(null, "get", "/overview").expect(401);
   await call(null, "post", "/goals", { title: "Hidden" }).expect(401);
   await request(app)
     .get("/api/me")
@@ -199,6 +200,28 @@ test("only accepted mentor can post feedback; concurrent retries insert once", a
     1,
   );
 });
+test("overview aggregates only authorized goals and updates", async () => {
+  const owner = (await call("student", "get", "/overview").expect(200)).body;
+  const mentor = (await call("mentor", "get", "/overview").expect(200)).body;
+  const stranger = (await call("other", "get", "/overview").expect(200)).body;
+  assert.deepEqual(owner.stats, {
+    goals: 1,
+    steps: 1,
+    completed_steps: 1,
+    feedback: 1,
+  });
+  assert.deepEqual(mentor, owner);
+  assert.equal(owner.feedback[0].goal_id, goal.id);
+  assert.equal(owner.checkpoints[0].goal_id, goal.id);
+  assert.deepEqual(stranger.stats, {
+    goals: 1,
+    steps: 0,
+    completed_steps: 0,
+    feedback: 0,
+  });
+  assert.deepEqual(stranger.feedback, []);
+  assert.deepEqual(stranger.checkpoints, []);
+});
 test("data survives a fresh API instance and database connection pool", async () => {
   await pool.end();
   pool = createPool(process.env.TEST_DATABASE_URL);
@@ -224,6 +247,15 @@ test("revocation removes mentor read/write access immediately; student retains f
     requestId: randomUUID(),
   }).expect(404);
   assert.equal((await call("mentor", "get", "/goals")).body.length, 0);
+  const overview = (await call("mentor", "get", "/overview").expect(200)).body;
+  assert.deepEqual(overview.stats, {
+    goals: 0,
+    steps: 0,
+    completed_steps: 0,
+    feedback: 0,
+  });
+  assert.deepEqual(overview.feedback, []);
+  assert.deepEqual(overview.checkpoints, []);
   assert.equal(
     (await call("student", "get", `/goals/${goal.id}`)).body.feedback.length,
     1,
