@@ -164,3 +164,105 @@ test("responsive views, search, filtering and keyboard dialog", async ({
   await expect(page.getByRole("dialog")).not.toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test("Agent example: source review, edited confirmation, stale records and revoked access", async ({
+  page,
+  context,
+}) => {
+  const external: string[] = [];
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  page.on("request", (request) => {
+    if (new URL(request.url()).hostname !== "127.0.0.1")
+      external.push(request.url());
+  });
+  await page.goto("welcome/");
+  await page.getByRole("link", { name: "Try the mentor example" }).click();
+  await page.getByRole("button", { name: /^Continue as mentor/ }).click();
+  await expect(page).toHaveURL(/goal\/\?id=1/);
+  const assistant = page.getByRole("region", {
+    name: "Mentor follow-up assistant",
+  });
+  await expect(assistant).toContainText("No AI model is called");
+  await assistant
+    .getByRole("button", { name: "Prepare example follow-up" })
+    .click();
+  await expect(assistant).toContainText(
+    "2 of 4 reviewed action steps are complete",
+  );
+  await assistant.getByText("Review source records", { exact: true }).click();
+  await expect(
+    assistant.getByText("Ask two peers to try it", { exact: true }),
+  ).toBeVisible();
+  const confirm = assistant.getByRole("button", {
+    name: "Confirm and share feedback",
+  });
+  await expect(confirm).toBeDisabled();
+  const student = await context.newPage();
+  await student.goto("login/");
+  await student.getByRole("button", { name: /^Continue as student/ }).click();
+  await student.goto("goal/?id=1");
+  await expect(student.getByText(/Let’s check in on/)).toHaveCount(0);
+  await expect(
+    student.getByRole("region", { name: "Mentor follow-up assistant" }),
+  ).toHaveCount(0);
+  await assistant.getByRole("checkbox").check();
+  const edited =
+    "Let’s invite two peers to try the portfolio and compare their feedback.";
+  await assistant.getByLabel("Review feedback draft").fill(edited);
+  await expect(assistant.getByRole("checkbox")).not.toBeChecked();
+  await expect(confirm).toBeDisabled();
+  await assistant.getByRole("checkbox").check();
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.screenshot({
+      path: `test-results/preview/agent-review-${width}.png`,
+      fullPage: true,
+    });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+  }
+  await confirm.click();
+  await expect(assistant.getByRole("status")).toContainText(
+    "Feedback saved in this demo",
+  );
+  await student.reload();
+  await expect(student.getByText(edited, { exact: true })).toHaveCount(1);
+  await page.reload();
+  await expect(page.getByText(edited, { exact: true })).toHaveCount(1);
+  await assistant
+    .getByRole("button", { name: "Prepare example follow-up" })
+    .click();
+  await student
+    .getByLabel("Next action")
+    .fill("Record feedback from both peers");
+  await student.getByRole("button", { name: "Add step", exact: true }).click();
+  await expect(student.getByRole("status")).toHaveText("Step added.");
+  await assistant.getByRole("checkbox").check();
+  await confirm.click();
+  await expect(assistant.getByRole("alert")).toContainText(
+    "The goal has changed",
+  );
+  await assistant
+    .getByRole("button", { name: "Prepare a new example" })
+    .click();
+  await expect(assistant).toContainText(
+    "2 of 5 reviewed action steps are complete",
+  );
+  await student.goto("?view=people");
+  student.once("dialog", (d) => d.accept());
+  await student.getByRole("button", { name: "Remove access" }).click();
+  await expect(student.getByRole("status")).toHaveText("Connection removed.");
+  await assistant.getByRole("checkbox").check();
+  await confirm.click();
+  await expect(assistant.getByRole("alert")).toContainText(
+    "access was removed",
+  );
+  await student.goto("goal/?id=1");
+  await expect(student.getByText(edited, { exact: true })).toHaveCount(1);
+  expect(external).toEqual([]);
+  expect(errors).toEqual([]);
+});

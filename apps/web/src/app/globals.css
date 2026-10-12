@@ -1782,3 +1782,26 @@ small,
   margin-top: 12px;
   font-size: 10px;
 }
+
+.welcome-agent {
+  max-width: 820px;
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.welcome-agent ol {
+  padding-left: 20px;
+  margin: 20px 0;
+  font-size: 13px;
+  line-height: 1.9;
+}
+.welcome-agent li {
+  margin-bottom: 8px;
+}
+.welcome-agent .demo-caption {
+  font-size: 12px;
+}
+.assistant-trace {
+  overflow-wrap: anywhere;
+}

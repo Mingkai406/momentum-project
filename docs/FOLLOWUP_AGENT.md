@@ -10,7 +10,7 @@ The assistant helps a mentor turn a student's goal, GROW plan, action steps, che
 4. Check **I have reviewed the sources and am ready to share this feedback**, then confirm. Any further edit clears the checkbox.
 5. The API rechecks access and the goal revision and saves the exact reviewed text in the existing feedback thread. A stale or expired draft must be regenerated. Removing access prevents sharing even if the draft is already open.
 
-Manual feedback remains available during service failures and without model configuration. The static public playground explicitly disables generation; it never presents a fixture as a real model response.
+Manual feedback remains available during service failures and without model configuration. The static public playground provides an explicitly labeled, template-based example using its current fictional goal records. It supports source review, editing, explicit confirmation, draft expiry, replay protection, and rejection after records change or access is revoked. It never calls a model or presents examples as real model responses. Browser-local checks demonstrate behavior; they are not a security boundary for real accounts. The server remains the authorization boundary for hosted data.
 
 ## Local service setup
 

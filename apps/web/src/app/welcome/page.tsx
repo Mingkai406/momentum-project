@@ -27,8 +27,8 @@ export default function Welcome() {
               and guidance together.
             </h1>
             <p>
-              Make a plan, record what changes and get feedback where it
-              belongs: next to the work you’re doing.
+              Make a plan, track progress and prepare a thoughtful follow-up.
+              The mentor reviews the sources and decides what gets shared.
             </p>
             <div className="welcome-actions">
               <Link className="button-link" href="/login">
@@ -84,13 +84,44 @@ export default function Welcome() {
             </p>
           </article>
         </section>
+        <section className="welcome-context welcome-agent">
+          <span className="welcome-label">Mentor follow-up Agent</span>
+          <h2>From scattered updates to a clear next step.</h2>
+          <p>
+            Review a student’s progress, check the source records, then edit and
+            confirm the feedback. The student’s plan stays theirs to change.
+          </p>
+          <ol>
+            <li>
+              <strong>Prepare</strong> — open a goal and bring its progress into
+              one draft.
+            </li>
+            <li>
+              <strong>Review</strong> — inspect the sources and put the feedback
+              in your own words.
+            </li>
+            <li>
+              <strong>Confirm</strong> — save only the feedback you choose to
+              share.
+            </li>
+          </ol>
+          <Link className="button-link" href="/login/?example=followup">
+            Try the mentor example <Icon name="arrow" size={16} />
+          </Link>
+          <p className="demo-caption">
+            Public demo: fictional records and template-based drafts. No AI
+            model is called. The connected application supports Google ADK and
+            Vertex AI.
+          </p>
+        </section>
         <section className="welcome-context">
           <h2>Built around a real mentoring need</h2>
           <p>
-            Momentum began in my work as a Global Student Mentor. An earlier
-            version supported approximately 40 mentees. This rebuilt version
-            brings the frontend and backend into one project, with a clearer
-            workflow and explicit control over who can access a student’s goals.
+            Momentum is a full-stack platform built to solve task tracking and
+            follow-up needs in Northeastern University’s OGS Global Student
+            Mentor Program. The project supported <strong>40+ students</strong>.
+            The new Agent workflow extends that foundation with source-linked
+            drafts, mentor review and confirmation before feedback is saved.
           </p>
           <a
             className="text-link"

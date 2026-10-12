@@ -1,7 +1,9 @@
 // Browser-only, fictional data adapter for the public playground.
 // The Express/Cognito API remains the implementation for real accounts.
 import type { Detail, User, Relationship } from "./api";
+import { exampleDraft, type PreviewDraft } from "./preview-followup";
 type State = {
+  followupDrafts?: Record<string, PreviewDraft>;
   users: Record<string, User>;
   goals: Detail[];
   relationships: (Relationship & {
@@ -309,6 +311,64 @@ export async function previewApi<T>(
       state.goals.push(goal);
       result = goal;
     }
+  } else if (path.includes("/followup/")) {
+    const match = path.match(
+      /^\/goals\/(\d+)\/followup\/(config|drafts)(?:\/([a-zA-Z0-9-]+)\/confirm)?$/,
+    );
+    const goal = state.goals.find((g) => g.id === Number(match?.[1]));
+    if (!goal || !readable(goal))
+      throw new Error("Goal not found or access was removed.");
+    if (user.role !== "mentor" || goal.owner_id === user.id)
+      throw new Error("Mentor access required");
+    state.followupDrafts ??= {};
+    if (match?.[2] === "config" && method === "GET") {
+      result = { enabled: true };
+    } else if (match?.[2] === "drafts" && !match[3] && method === "POST") {
+      state.followupDrafts = Object.fromEntries(
+        Object.entries(state.followupDrafts)
+          .filter(([, d]) => d.expires > Date.now())
+          .slice(-19),
+      );
+      const id = crypto.randomUUID();
+      const draft: PreviewDraft = {
+        ...exampleDraft(goal, id),
+        mentor_id: user.id,
+        goal_id: goal.id,
+        snapshot: JSON.stringify(goal),
+        expires: Date.now() + 30 * 60 * 1000,
+      };
+      state.followupDrafts[id] = draft;
+      result = draft;
+    } else if (match?.[3] && method === "POST") {
+      const draft = state.followupDrafts[match[3]];
+      if (!draft || draft.mentor_id !== user.id || draft.goal_id !== goal.id)
+        throw new Error("Draft not found.");
+      if (draft.expires <= Date.now())
+        throw new Error("This draft expired. Prepare a new example.");
+      const text = typeof body.body === "string" ? body.body.trim() : "";
+      if (body.confirmed !== true || !text || text.length > 4000)
+        throw new Error("Review and confirm feedback before sharing.");
+      if (draft.feedback_id) {
+        if (draft.confirmed_body !== text)
+          throw new Error("This draft has already been shared.");
+        result = draft;
+      } else {
+        if (draft.snapshot !== JSON.stringify(goal))
+          throw new Error(
+            "The goal has changed. Prepare a new example and review the latest records.",
+          );
+        const feedback = {
+          id: next(),
+          mentor_email: user.email,
+          body: text,
+          created_at: now(),
+        };
+        goal.feedback.unshift(feedback);
+        draft.feedback_id = feedback.id;
+        draft.confirmed_body = text;
+        result = draft;
+      }
+    } else throw new Error("Unknown follow-up action.");
   } else {
     const match = path.match(
       /^\/goals\/(\d+)(?:\/(grow|steps|checkpoints|feedback))?(?:\/(\d+))?$/,

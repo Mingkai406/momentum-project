@@ -21,7 +21,7 @@ Momentum brings goals, GROW plans, action steps, check-ins and feedback into one
 
 **Student view:** set a goal, break it into steps and record progress. **Mentor view:** follow an accepted student's plan and respond alongside the work.
 
-The public demo opens without signup and uses fictional data saved in your browser. Try creating a goal, completing a step and switching roles; **Reset demo** restores the examples.
+The public demo opens without signup and uses fictional data saved in your browser. Use **Try the mentor example** on the welcome page to open a student goal, prepare a source-linked example draft, edit it and confirm feedback. You can also create goals, complete steps and switch roles; **Reset demo** restores the examples.
 
 <details>
 <summary><strong>Goal detail and mobile view</strong></summary>
@@ -44,7 +44,7 @@ The assistant works on one student's goal at a time. It reads the plan, steps, c
 
 [Agent setup, tracing and evaluation →](docs/FOLLOWUP_AGENT.md)
 
-> **Try-it status:** the public demo covers the core mentoring workflow. AI generation requires the optional Python service and a configured Vertex AI project; real model validation is pending. The 40+ students reflect use of the mentoring application before this Agent addition.
+> **Try-it status:** the public demo includes an **interactive Agent workflow example**, using deterministic templates and local fictional records—not model-generated responses. It checks current access and changed records before saving feedback. Real AI generation requires the optional Python service and a configured Vertex AI project; real model validation is pending. The 40+ students reflect use of the mentoring application before this Agent addition.
 
 ## Engineering
 

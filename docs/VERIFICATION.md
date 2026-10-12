@@ -1,3 +1,11 @@
+## Public Agent example — 2026-10-12
+
+The welcome page now includes an explicit mentor-example entry and retains Northeastern OGS / 40+ students as historical platform use. The browser-local assistant uses deterministic templates, not a model. It shows source records, supports draft editing, resets approval after edits, and saves only after explicit confirmation. Old playground data remains compatible.
+
+Validation: TypeScript and both production/static builds passed; 22 API tests and PostgreSQL restart verification passed; the core application and connected-assistant browser tests passed; all 3 public-playground browser tests passed. The new public test covers no feedback before approval, edited feedback visible once in the student view and after reload, rejected stale drafts, revoked access, mobile/desktop overflow, and no external requests from the example flow. Formatting and diff whitespace checks passed. Real Vertex calls remain deferred.
+
+Browser-local access checks demonstrate the interaction only; hosted accounts are protected by the backend. No real user data or paid cloud service was used. No resume changed.
+
 # Verification — 2026-10-12 mentor follow-up agent
 
 Local environment: macOS/arm64, Node 20.19.4, Python 3.12, Google ADK 1.39.1, disposable PostgreSQL 18 and Playwright Chromium.

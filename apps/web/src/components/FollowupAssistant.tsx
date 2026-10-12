@@ -27,13 +27,10 @@ export function FollowupAssistant({
   const [reviewed, setReviewed] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const preview = process.env.NEXT_PUBLIC_PLAYGROUND === "true";
   const base = `/goals/${goalId}/followup`;
   useEffect(() => {
     let current = true;
-    if (process.env.NEXT_PUBLIC_PLAYGROUND === "true") {
-      setEnabled(false);
-      return;
-    }
     api<{ enabled: boolean }>(`${base}/config`)
       .then((v) => {
         if (current) setEnabled(v.enabled);
@@ -54,7 +51,9 @@ export function FollowupAssistant({
       const d = await api<Draft>(`${base}/drafts`, json("POST", {}));
       setDraft(d);
       setBody(d.draft);
-      setMessage("Draft ready. Check the sources and edit before sharing.");
+      setMessage(
+        `${preview ? "Example draft" : "Draft"} ready. Check the sources and edit before sharing.`,
+      );
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -74,7 +73,11 @@ export function FollowupAssistant({
       setDraft(null);
       setBody("");
       setReviewed(false);
-      setMessage("Feedback shared with the student.");
+      setMessage(
+        preview
+          ? "Feedback saved in this demo. Switch to the student view to read it."
+          : "Feedback shared with the student.",
+      );
       await onSaved();
     } catch (e) {
       setError((e as Error).message);
@@ -92,11 +95,16 @@ export function FollowupAssistant({
         Review progress and prepare feedback from this goal’s records. Nothing
         is shared until you confirm.
       </p>
+      {preview && (
+        <p className="assistant-note">
+          <strong>Interactive example · No AI model is called.</strong>
+          <br />A template uses this goal’s records. Your edits and feedback
+          stay in this browser.
+        </p>
+      )}
       {enabled === false ? (
         <p className="assistant-note">
-          {process.env.NEXT_PUBLIC_PLAYGROUND === "true"
-            ? "AI drafts are available in the connected application. This playground uses local example data."
-            : "The assistant is not connected. You can still write feedback below."}
+          The assistant is not connected. You can still write feedback below.
         </p>
       ) : (
         <button
@@ -108,8 +116,12 @@ export function FollowupAssistant({
           {busy
             ? "Working…"
             : draft
-              ? "Generate a new draft"
-              : "Prepare follow-up"}
+              ? preview
+                ? "Prepare a new example"
+                : "Generate a new draft"
+              : preview
+                ? "Prepare example follow-up"
+                : "Prepare follow-up"}
         </button>
       )}
       {error && (
@@ -214,7 +226,8 @@ export function FollowupAssistant({
             </button>
           </form>
           <small className="assistant-trace">
-            Support reference: {draft.trace_id}
+            {preview ? "Example reference" : "Support reference"}:{" "}
+            {draft.trace_id}
           </small>
         </>
       )}

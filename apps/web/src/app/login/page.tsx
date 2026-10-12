@@ -29,7 +29,14 @@ export default function Login() {
         true,
       );
       sessionStorage.setItem("momentum-demo", r.token);
-      window.location.assign(`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/`);
+      const followupExample =
+        process.env.NEXT_PUBLIC_PLAYGROUND === "true" &&
+        account === "mentor" &&
+        new URLSearchParams(window.location.search).get("example") ===
+          "followup";
+      window.location.assign(
+        `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/${followupExample ? "goal/?id=1" : ""}`,
+      );
     } catch (e) {
       setError((e as Error).message);
       setBusy(false);
@@ -127,7 +134,7 @@ export default function Login() {
                   [
                     "mentor",
                     "Continue as mentor",
-                    "Review student progress and share feedback.",
+                    "Review progress, try the follow-up assistant and share feedback.",
                     "people",
                   ],
                   [
