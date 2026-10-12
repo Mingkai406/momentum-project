@@ -11,7 +11,14 @@ const email = z
   .max(254)
   .transform((s) => s.toLowerCase());
 const fail = (status, message) => Object.assign(new Error(message), { status });
-function createApp({ pool, auth, origin = "http://localhost:3000" }) {
+function createApp({
+  pool,
+  auth,
+  origin = "http://localhost:3000",
+  followupProvider = null,
+  followupLogger,
+  followupTimeoutMs,
+}) {
   const app = express();
   app.disable("x-powered-by");
   app.use(helmet());
@@ -293,6 +300,12 @@ function createApp({ pool, auth, origin = "http://localhost:3000" }) {
     )
       throw fail(409, "Request ID already used for different feedback");
     res.json(previous.rows[0]);
+  });
+  require("./followup").registerFollowup(app, {
+    pool,
+    provider: followupProvider,
+    logger: followupLogger,
+    timeoutMs: followupTimeoutMs,
   });
   app.use((req, res) => res.status(404).json({ error: "Not found" }));
   app.use((err, req, res, next) => {

@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState, useRef } from "react";
 import { api, json, User, Detail, Grow } from "@/lib/api";
 import { Shell, Notice } from "@/components/Shell";
+import { FollowupAssistant } from "@/components/FollowupAssistant";
 import { Icon } from "@/components/Icons";
 const labels = {
   goal: "Goal — what do you want?",
@@ -455,6 +456,13 @@ function GoalPage() {
                   </div>
                 )}
               </div>
+              {!owner && user?.role === "mentor" && (
+                <FollowupAssistant
+                  key={`${goal.id}:${user.id}`}
+                  goalId={goal.id}
+                  onSaved={() => load()}
+                />
+              )}
               {!owner && user?.role === "mentor" && (
                 <form
                   className="stack feedback-form"

@@ -16,12 +16,11 @@ async function migrate(pool) {
   try {
     await client.query("BEGIN");
     await client.query("SELECT pg_advisory_xact_lock(482613)");
-    await client.query(
-      readFileSync(
-        path.join(__dirname, "../../database/001_initial.sql"),
-        "utf8",
-      ),
-    );
+    for (const file of ["001_initial.sql", "002_followup.sql"]) {
+      await client.query(
+        readFileSync(path.join(__dirname, "../../database", file), "utf8"),
+      );
+    }
     await client.query("COMMIT");
   } catch (error) {
     await client.query("ROLLBACK");

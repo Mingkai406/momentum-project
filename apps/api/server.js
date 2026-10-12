@@ -8,6 +8,7 @@ async function main() {
   const app = createApp({
     pool,
     auth,
+    followupProvider: require("./followup-provider").createFollowupProvider(),
     origin: process.env.WEB_ORIGIN || "http://localhost:3000",
   });
   const server = app.listen(

@@ -1,4 +1,33 @@
-# Verification — 2026-10-11 interface and public demo revision
+# Verification — 2026-10-12 mentor follow-up agent
+
+Local environment: macOS/arm64, Node 20.19.4, Python 3.12, Google ADK 1.39.1, disposable PostgreSQL 18 and Playwright Chromium.
+
+| Check                                          | Result                                                                                 |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------- |
+| API/auth and permission tests                  | 22 passed; includes 9 follow-up integration tests                                      |
+| ADK/Python service tests                       | 11 passed, including real ADK Runner with a scripted model and HTTP service boundaries |
+| Full-app browser workflow                      | 1 passed; existing student/mentor workflow preserved                                   |
+| Assistant browser workflow                     | 1 passed; source review, editing, confirmation, stale draft and revoked access         |
+| Public-demo browser tests                      | 2 passed; local data, editing, reset, responsive/keyboard behavior                     |
+| TypeScript / production build / static export  | Passed                                                                                 |
+| PostgreSQL restart persistence                 | Passed                                                                                 |
+| Formatting and diff whitespace                 | Passed                                                                                 |
+| npm production dependency audit                | 0 reported vulnerabilities at check time                                               |
+| Real Vertex request / model-quality evaluation | Not run: personal GCP project/ADC unavailable; deferred by owner                       |
+
+The assistant tests check identity-derived access, rejection of caller-supplied context, isolation between mentors, no feedback before approval, six concurrent retries producing one feedback record, persistence across application instances, expiration, updates and revocation during generation, and a student update racing with confirmation. Provider errors, invalid references and timeouts leave manual feedback available. Python checks cover tool permissions and budgets, source validation, service authentication, bounded input and metadata-only trace propagation. A 20-case fictional evaluation set is validated structurally; no real-model quality result is claimed.
+
+The mobile review screenshot was inspected after correcting assistant padding; source records, editor, review checkbox and confirmation controls fit at 390 px with no horizontal overflow. Browser screenshots and traces are local test artifacts under `test-results/`. Browser model responses explicitly identify themselves as fixtures.
+
+Commands: `npm run check`, `npm run test:agent:browser`, `PYTHONPATH=services/followup .venv-agent/bin/python -m pytest tests/agent -q`, `npm run build:preview`, `npm run test:preview`, `npm run format:check`, `npm audit --omit=dev --audit-level=high`, `git diff --check`. CI runs the API, ADK and browser suites without cloud credentials. Python tests emit one upstream Starlette/httpx deprecation warning; no test fails.
+
+This work adds the optional service and its integration, not a live AI deployment. Real model behavior, collector delivery, container execution, cloud authentication and distributed load remain unverified. The earlier approximately 40 mentees are historical use, not adoption of this assistant. No resume files were changed.
+
+[Setup and boundaries](FOLLOWUP_AGENT.md)
+
+---
+
+## Previous verification — 2026-10-11 interface and public demo revision
 
 Local environment: macOS/arm64, Node 20.19.4, real disposable PostgreSQL 18 and Playwright Chromium. The full application and browser-only demo are checked separately.
 

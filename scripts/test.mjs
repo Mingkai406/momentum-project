@@ -11,6 +11,7 @@ try {
       "--test-concurrency=1",
       "tests/api/workflow.test.cjs",
       "tests/api/auth.test.cjs",
+      "tests/api/followup.test.cjs",
     ],
     { env: { ...process.env, TEST_DATABASE_URL: db.url }, stdio: "inherit" },
   );
