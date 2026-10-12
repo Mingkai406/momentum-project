@@ -215,9 +215,20 @@ test("Agent example: source review, edited confirmation, stale records and revok
   await assistant.getByRole("checkbox").check();
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 900 });
+    await page.evaluate(() => window.scrollTo(0, 0));
+    if (width === 390) {
+      await expect
+        .poll(() =>
+          page
+            .locator(".sidebar")
+            .evaluate((e) => e.getBoundingClientRect().right),
+        )
+        .toBeLessThanOrEqual(0);
+    }
     await page.screenshot({
       path: `test-results/preview/agent-review-${width}.png`,
       fullPage: true,
+      animations: "disabled",
     });
     expect(
       await page.evaluate(
