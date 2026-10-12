@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="440" viewBox="0 0 1200 440" role="img" aria-labelledby="title desc">
+<title id="title">Momentum: from student progress to a reviewed next step</title>
+<desc id="desc">Students capture goals and progress. The mentor assistant reads authorized records and prepares a source-linked draft. A mentor reviews and confirms before feedback is shared.</desc>
+<rect width="1200" height="440" fill="#fff"/>
+<g font-family="Arial, Helvetica, sans-serif">
+<rect x="40" y="34" width="44" height="5" fill="#3159c5"/>
+<text x="98" y="42" font-size="15" font-weight="700" letter-spacing="2" fill="#566273">MOMENTUM / THE MENTORING LOOP</text>
+<text x="40" y="112" font-family="Arial Narrow, Helvetica, Arial, sans-serif" font-size="47" font-weight="700" letter-spacing="-1.5" fill="#17212d">A clearer next step, together.</text>
+<text x="40" y="151" font-size="21" fill="#566273">A full-stack workspace connecting student progress with thoughtful mentor follow-up.</text>
+<line x1="40" y1="193" x2="1160" y2="193" stroke="#d7dee8"/>
+<line x1="62" y1="240" x2="1134" y2="240" stroke="#c9d2e0" stroke-width="2"/>
+<g fill="#fff" stroke="#3159c5" stroke-width="2"><circle cx="62" cy="240" r="21"/><circle cx="443" cy="240" r="21"/><circle cx="824" cy="240" r="21"/></g>
+<g font-size="17" font-weight="700" fill="#3159c5" text-anchor="middle"><text x="62" y="246">01</text><text x="443" y="246">02</text><text x="824" y="246">03</text></g>
+<g fill="#17212d" font-size="27" font-weight="700"><text x="40" y="300">Capture progress</text><text x="421" y="300">Prepare a follow-up</text><text x="802" y="300">Review &amp; share</text></g>
+<g fill="#566273" font-size="20"><text x="40" y="338">Goals, action steps</text><text x="40" y="365">and student check-ins.</text><text x="421" y="338">An agent reads scoped records</text><text x="421" y="365">and links its draft to sources.</text><text x="802" y="338">The mentor edits and confirms.</text><text x="802" y="365">Then feedback is saved.</text></g>
+<text x="40" y="416" font-size="15" fill="#566273">STUDENT-OWNED PLANS</text><text x="421" y="416" font-size="15" fill="#566273">READ-ONLY AGENT TOOLS</text><text x="802" y="416" font-size="15" fill="#3159c5" font-weight="700">HUMAN-CONFIRMED FEEDBACK</text>
+</g></svg>

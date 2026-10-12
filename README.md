@@ -1,75 +1,85 @@
 # Momentum
 
-**Goals, progress and mentor feedback in one workspace.**
+### A full-stack mentoring platform with an AI follow-up assistant.
 
-[Try the live demo →](https://mingkai406.github.io/momentum-project/welcome/) · [Architecture](docs/ARCHITECTURE.md) · [Run locally](#run-the-full-application-locally)
+[**Explore the demo ↗**](https://mingkai406.github.io/momentum-project/welcome/) · [Agent workflow](#from-progress-to-a-useful-follow-up) · [Engineering](#engineering) · [Run locally](#run-locally)
 
-I built Momentum around my work as a Global Student Mentor. An earlier version supported approximately **40 mentees**. This rebuild brings the frontend and backend together and focuses on what happens between mentoring conversations: setting a clear goal, following through on small steps, and knowing when to ask for help.
+![Momentum mentoring loop: capture student progress, prepare a source-linked agent draft, then review and share.](docs/readme/mentoring-flow.svg)
 
-![Momentum overview](docs/screenshots/overview-desktop.png)
+## Built around a real mentoring need
 
-## Take a look
+Between mentoring conversations, students need a clear next step and mentors need a way to see what has changed. I built Momentum to address that task-tracking and follow-up problem while serving as a mentor in **Northeastern University's OGS Global Student Mentor Program**. The project supported **40+ students** in that program.
 
-The [public demo](https://mingkai406.github.io/momentum-project/welcome/) opens without an account. Choose **student** to explore a populated workspace, or **mentor** to read plans and leave feedback. Try creating a goal, completing a step and recording a check-in, then switch roles to see the other side.
+Momentum brings goals, GROW plans, action steps, check-ins and feedback into one workspace. The new mentor assistant adds source-linked progress summaries and editable follow-up drafts, with the mentor deciding what gets shared.
 
-The demo uses fictional examples stored in your browser. Changes survive a refresh; **Reset demo** restores the examples. It does not create real accounts, synchronize across devices or contact the backend. The approximately 40 mentees belong to the earlier application, not this public demo.
+## See the workspace
 
-## The workflow
+[![Momentum student workspace with goals, progress, next actions and recent updates.](docs/screenshots/overview-desktop.png)](https://mingkai406.github.io/momentum-project/welcome/)
 
-| Workspace              | What it makes easier                                                                 |
-| ---------------------- | ------------------------------------------------------------------------------------ |
-| **Overview**           | See goals, completed steps, upcoming actions and recent conversations together.      |
-| **Goals**              | Search and filter goals, then open the plan, action steps or monthly check-ins.      |
-| **Mentors / Students** | Invite a student, accept a connection and remove access when it is no longer needed. |
-| **Updates**            | Find the latest check-ins and mentor feedback without opening every goal.            |
+**Student view:** set a goal, break it into steps and record progress. **Mentor view:** follow an accepted student's plan and respond alongside the work.
 
-A student's plan uses **GROW**: Goal, Reality, Options and Will. Students own their plans and progress records. Mentors can read and respond after the student accepts their invitation, but cannot rewrite the student's work.
-
-![Goal detail with action steps and feedback](docs/screenshots/goal-desktop.png)
+The public demo opens without signup and uses fictional data saved in your browser. Try creating a goal, completing a step and switching roles; **Reset demo** restores the examples.
 
 <details>
-<summary>Mobile view</summary>
-<br />
+<summary><strong>Goal detail and mobile view</strong></summary>
+
+![Goal detail with GROW planning, action steps and mentor feedback.](docs/screenshots/goal-desktop.png)
+
 <img src="docs/screenshots/overview-mobile.png" width="320" alt="Momentum overview on a phone" />
+
 </details>
 
-## Mentor follow-up assistant
+## From progress to a useful follow-up
 
-In the connected application, a mentor can prepare a source-linked progress summary and editable feedback from an accepted student's goal. A Google ADK agent reads a bounded goal snapshot through read-only tools. **Nothing is shared until the mentor reviews and confirms it.** The API rechecks access and the goal revision before writing feedback; retries cannot post it twice.
+The assistant works on one student's goal at a time. It reads the plan, steps, check-ins and previous feedback, then prepares observations and suggested next steps with links to the underlying records.
 
-The optional Python service uses Vertex AI. Without a configured project, manual feedback works as before. The public playground does not call a model. [Setup, permissions, tracing and evaluation →](docs/FOLLOWUP_AGENT.md)
+| Prepare                                                                     | Review                                                            | Share                                                                           |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| A Google ADK agent reads a server-authorized snapshot through scoped tools. | The mentor checks source records and edits the proposed feedback. | Explicit confirmation saves the reviewed text in the student's feedback thread. |
+
+**The agent cannot rewrite a student's plan or publish feedback on its own.** If records change or access is revoked, the API rejects the pending draft. Repeated confirmation saves a single feedback entry.
+
+[Agent setup, tracing and evaluation →](docs/FOLLOWUP_AGENT.md)
+
+> **Try-it status:** the public demo covers the core mentoring workflow. AI generation requires the optional Python service and a configured Vertex AI project; real model validation is pending. The 40+ students reflect use of the mentoring application before this Agent addition.
 
 ## Engineering
 
-The public playground and the full application share the same Next.js interface. The playground uses a browser-only data adapter; the full application sends authenticated requests to Express and PostgreSQL.
+![Two-stage architecture: authorized snapshot to read-only ADK agent to draft; mentor confirmation to API permission, revision and replay checks to an atomic PostgreSQL write.](docs/readme/agent-boundaries.svg)
 
-```mermaid
-flowchart LR
-    UI[Next.js · React · TypeScript] --> Mode{Build mode}
-    Mode -->|Full application| API[Express API]
-    API --> Auth[Cognito identity verification]
-    API --> DB[(PostgreSQL)]
-    API -->|Authorized snapshot| Agent[Python · Google ADK · Vertex AI]
-    Mode -->|Public playground| Local[Browser-local fictional data]
-```
+| Design choice                  | What it protects or enables                                                                                  |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| **Relationship-based access**  | Only an accepted mentor can read a student's goal; drafts remain private to the mentor who created them.     |
+| **Versioned context**          | Changes to plans, steps, check-ins or feedback invalidate pending drafts.                                    |
+| **Transactional confirmation** | Access and revision checks happen with the write; concurrent retries return the same feedback.               |
+| **Bounded agent execution**    | Read-only tools, strict output validation, known source IDs, call budgets and timeouts.                      |
+| **Metadata-only tracing**      | A shared trace ID connects API events, model calls and tools without logging student notes or feedback text. |
 
-- **Authorization at the API boundary.** Each goal request checks its owner or an accepted mentor relationship. Roles come from verified identity, not a field submitted by the browser. The overview applies the same visibility rules to counts and recent activity.
-- **Predictable writes.** Monthly check-ins and GROW plans use atomic upserts. Feedback uses a request ID so a retried submission does not create a second comment. Schema application runs in a transaction under an advisory lock.
-- **Permission tests with real storage.** Integration tests use disposable PostgreSQL, including access revocation, cross-account writes, concurrent feedback retries and persistence across a database restart.
-- **Browser journeys.** The full-app test uses independent student, mentor and unrelated-student sessions. Playground tests cover editing, role switching, browser isolation, reset, keyboard focus and three viewport sizes.
+The interface and API remain independently usable without the assistant. Manual feedback continues to work if generation is unavailable.
 
-| Layer                       | Technology                                         |
-| --------------------------- | -------------------------------------------------- |
-| Web                         | Next.js 15, React 19, TypeScript, responsive CSS   |
-| API                         | Node.js, Express 5, Zod, parameterized SQL         |
-| Storage                     | PostgreSQL                                         |
-| Hosted identity integration | Amazon Cognito, verified JWTs                      |
-| Tests                       | Node test runner, Supertest, Playwright / Chromium |
-| Public hosting              | GitHub Pages, static export, GitHub Actions        |
+| Layer             | Implementation                                            |
+| ----------------- | --------------------------------------------------------- |
+| Interface         | Next.js 15 · React 19 · TypeScript                        |
+| Backend           | Node.js · Express 5 · Zod                                 |
+| Data and identity | PostgreSQL · Amazon Cognito JWT verification              |
+| Agent service     | Python · FastAPI · Google ADK · Vertex AI integration     |
+| Observability     | OpenTelemetry spans · structured event logs               |
+| Verification      | Node test runner · Supertest · pytest · Playwright        |
+| Public demo       | GitHub Pages · static export · browser-local example data |
 
-## Run the full application locally
+[Application architecture](docs/ARCHITECTURE.md) · [Agent architecture and boundaries](docs/FOLLOWUP_AGENT.md#data-and-authority-boundaries) · [Deployment](docs/DEPLOYMENT.md)
 
-Requires Node.js 20.19+ and npm on macOS or Linux. No Docker or AWS account is needed for the local workflow.
+## Verified workflows
+
+**22 API/auth tests · 11 Python/ADK tests · 4 browser tests** passed in the documented local run. GitHub CI also passed the application and Agent suites.
+
+Coverage includes cross-account isolation, revoked access, changing records, expired drafts, concurrent confirmation, provider failures and the existing student/mentor workflow. Python tests execute the real ADK Runner with a scripted model; browser Agent tests use an explicitly labeled service fixture. A **20-case fictional evaluation set** is ready for live model testing.
+
+[Verification report and limits →](docs/VERIFICATION.md)
+
+## Run locally
+
+Node.js **20.19+** and npm, on macOS or Linux:
 
 ```sh
 git clone https://github.com/Mingkai406/momentum-project.git
@@ -78,42 +88,56 @@ npm ci
 npm run dev
 ```
 
-Then open `http://127.0.0.1:3000` **on the same computer**. This address works only while the local server is running. For a shareable website, use the live demo link above.
+Open **http://127.0.0.1:3000** on that computer. One command starts the frontend, API and PostgreSQL with fictional local accounts. Local data persists in the ignored `.local/` directory. No AWS or GCP account is needed for the core workflow.
 
-One command starts Next.js, Express and PostgreSQL. Data stays in the ignored `.local/` directory between runs. Ctrl+C stops all three. To try a real API-backed mentoring flow:
+<details>
+<summary><strong>Walk through student and mentor access</strong></summary>
 
 1. Choose **student**, create a goal and add a step.
-2. Open a separate tab, choose **mentor**, and invite `student@example.test` under **Students**.
-3. Return to the student tab, reload **Mentors**, and accept the invitation.
-4. Reload the mentor's goal list, open the goal and leave feedback.
-5. Remove the connection as the student and verify that the mentor can no longer open the goal.
+2. In a separate tab, choose **mentor** and invite `student@example.test` under **Students**.
+3. Return to the student's **Mentors** page and accept the invitation.
+4. Reload the mentor's goals, open the goal and leave feedback.
+5. Remove the connection as the student to revoke the mentor's access.
 
-Local accounts are fictional and use signed, short-lived tokens. The API refuses local demo authentication on a public interface or in production. Real hosted accounts use the Cognito integration described in [deployment](docs/DEPLOYMENT.md).
+Local sign-in is restricted to development on loopback. Hosted accounts use Cognito. The local address is not a public website; use the demo link to explore without installing anything.
 
-## Run checks
+</details>
+
+**Connect the assistant:** install the optional Python service and configure a personal Vertex AI project using the [Agent setup guide](docs/FOLLOWUP_AGENT.md#local-service-setup).
+
+<details>
+<summary><strong>Run the checks</strong></summary>
 
 ```sh
 npx playwright install chromium
-npm run check          # types, API/auth, production build, full-app browser journey
-npm run build:preview  # static site for the public demo
-npm run test:preview   # demo behavior and responsive checks
+npm run check
+npm run test:agent:browser
+npm run build:preview
+npm run test:preview
 npm run format:check
 ```
 
-GitHub Actions verifies the full application and tests the static export before publishing it. See [verification results](docs/VERIFICATION.md) for scope and limitations.
+After installing the Python dependencies described in the setup guide:
 
-## Repository map
-
-```text
-apps/web/       Interface, authentication client and public demo adapter
-apps/api/       Express routes, authorization and database access
- database/      PostgreSQL schema
- scripts/       Local startup, migration, test and export runners
- services/followup/  Optional Python ADK service and fictional evaluation cases
- tests/         API/auth, ADK, full-app browser and public-demo tests
- docs/          Architecture, deployment, provenance and screenshots
+```sh
+PYTHONPATH=services/followup .venv-agent/bin/python -m pytest tests/agent -q
 ```
 
-The original frontend and backend repositories were imported with their history recorded here; they remain available separately. The standalone Go scheduler was not connected to this workflow and is excluded from the rebuild. [Source provenance →](docs/PROVENANCE.md)
+The live-model evaluation is separately opt-in and requires cloud credentials.
 
-Current limits: invitations appear in the app without sending email; goal lists show up to 200 records; the public site is a browser-local demo. Hosting the real backend, configuring a live Cognito pool and arranging backups are separate deployment steps. The old AWS deployment remains stopped.
+</details>
+
+## Explore the source
+
+```text
+apps/web/           Interface, authentication client and demo adapter
+apps/api/           Authenticated routes, permissions and confirmation
+services/followup/  ADK tools, model service, tracing and evaluation cases
+database/           PostgreSQL schema and migrations
+tests/              API, agent and browser coverage
+docs/               Architecture, setup, verification and screenshots
+```
+
+The frontend and backend are consolidated here; the original repositories remain available. [Repository provenance](docs/PROVENANCE.md). Invitations currently appear in-app without email delivery. The public site uses local example data; hosted accounts and the AI backend are not deployed there.
+
+<sub>Visual direction: typography and restrained annotations inspired by <a href="https://hrbrmstr.github.io/hrbrthemes/">hrbrthemes / theme_ipsum</a>, selected from the <a href="https://exts.ggplot2.tidyverse.org/gallery/">ggplot2 extension gallery</a>. Diagrams are original SVGs; interface images are Momentum screenshots with fictional data.</sub>

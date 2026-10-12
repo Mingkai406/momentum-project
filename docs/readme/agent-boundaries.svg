@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="530" viewBox="0 0 1200 530" role="img" aria-labelledby="title desc">
+<title id="title">Read with scope. Write with approval.</title><desc id="desc">The Express API authorizes a goal snapshot for the Python ADK agent. The agent returns a draft for mentor review. Only a confirmed request passes permission, revision and replay checks before saving to PostgreSQL. Vertex AI is optional and live validation is pending.</desc>
+<defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8" fill="none" stroke="#536982" stroke-width="1.4"/></marker></defs>
+<rect width="1200" height="530" fill="#fff"/>
+<g font-family="Arial, Helvetica, sans-serif">
+<text x="40" y="40" font-size="15" font-weight="700" letter-spacing="2" fill="#566273">MOMENTUM / SYSTEM DESIGN</text>
+<text x="40" y="101" font-family="Arial Narrow, Helvetica, Arial, sans-serif" font-size="42" font-weight="700" letter-spacing="-1" fill="#17212d">Read with scope. Write with approval.</text>
+<line x1="40" y1="129" x2="1160" y2="129" stroke="#d7dee8"/>
+<text x="40" y="171" font-size="16" font-weight="700" fill="#3159c5">01 / PREPARE</text>
+<text x="40" y="324" font-size="16" font-weight="700" fill="#3159c5">02 / CONFIRM</text>
+<g fill="#f5f7fb" stroke="#d7dee8"><rect x="40" y="191" width="312" height="90"/><rect x="444" y="191" width="312" height="90"/><rect x="848" y="191" width="312" height="90"/><rect x="40" y="345" width="312" height="90"/><rect x="444" y="345" width="312" height="90"/><rect x="848" y="345" width="312" height="90"/></g>
+<g stroke="#536982" stroke-width="2" fill="none" marker-end="url(#arrow)"><path d="M365 236H429"/><path d="M769 236H833"/><path d="M365 390H429"/><path d="M769 390H833"/></g>
+<g font-size="23" font-weight="700" fill="#17212d"><text x="60" y="228">Authorized snapshot</text><text x="464" y="228">Google ADK agent</text><text x="868" y="228">Reviewable draft</text><text x="60" y="382">Mentor confirmation</text><text x="464" y="382">API rechecks</text><text x="868" y="382">Feedback saved</text></g>
+<g font-size="18" fill="#566273"><text x="60" y="257">Express / accepted relationship</text><text x="464" y="257">Python / read-only tools</text><text x="868" y="257">Sources / editable feedback</text><text x="60" y="411">Next.js / exact reviewed text</text><text x="464" y="411">Access / revision / replay</text><text x="868" y="411">PostgreSQL / atomic write</text></g>
+<text x="40" y="480" font-size="18" fill="#17212d">Model access and database writes stay on separate paths.</text>
+<text x="40" y="513" font-size="16" fill="#566273">Optional Vertex AI connection · Live model validation pending · Public demo uses browser-local examples</text>
+</g></svg>
