@@ -19,7 +19,8 @@
     "format:check": "prettier --check apps scripts tests playwright*.config.ts docs README.md .github/workflows",
     "build:preview": "node scripts/build-preview.mjs",
     "test:preview": "playwright test -c playwright.preview.config.ts",
-    "serve:preview": "node scripts/serve-preview.mjs"
+    "serve:preview": "node scripts/serve-preview.mjs",
+    "test:agent:browser": "playwright test -c playwright.agent.config.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0",

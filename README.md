@@ -33,6 +33,12 @@ A student's plan uses **GROW**: Goal, Reality, Options and Will. Students own th
 <img src="docs/screenshots/overview-mobile.png" width="320" alt="Momentum overview on a phone" />
 </details>
 
+## Mentor follow-up assistant
+
+In the connected application, a mentor can prepare a source-linked progress summary and editable feedback from an accepted student's goal. A Google ADK agent reads a bounded goal snapshot through read-only tools. **Nothing is shared until the mentor reviews and confirms it.** The API rechecks access and the goal revision before writing feedback; retries cannot post it twice.
+
+The optional Python service uses Vertex AI. Without a configured project, manual feedback works as before. The public playground does not call a model. [Setup, permissions, tracing and evaluation →](docs/FOLLOWUP_AGENT.md)
+
 ## Engineering
 
 The public playground and the full application share the same Next.js interface. The playground uses a browser-only data adapter; the full application sends authenticated requests to Express and PostgreSQL.
@@ -43,13 +49,14 @@ flowchart LR
     Mode -->|Full application| API[Express API]
     API --> Auth[Cognito identity verification]
     API --> DB[(PostgreSQL)]
+    API -->|Authorized snapshot| Agent[Python · Google ADK · Vertex AI]
     Mode -->|Public playground| Local[Browser-local fictional data]
 ```
 
 - **Authorization at the API boundary.** Each goal request checks its owner or an accepted mentor relationship. Roles come from verified identity, not a field submitted by the browser. The overview applies the same visibility rules to counts and recent activity.
 - **Predictable writes.** Monthly check-ins and GROW plans use atomic upserts. Feedback uses a request ID so a retried submission does not create a second comment. Schema application runs in a transaction under an advisory lock.
 - **Permission tests with real storage.** Integration tests use disposable PostgreSQL, including access revocation, cross-account writes, concurrent feedback retries and persistence across a database restart.
-- **Two browser journeys.** The full-app test uses independent student, mentor and unrelated-student sessions. Playground tests cover editing, role switching, browser isolation, reset, keyboard focus and three viewport sizes.
+- **Browser journeys.** The full-app test uses independent student, mentor and unrelated-student sessions. Playground tests cover editing, role switching, browser isolation, reset, keyboard focus and three viewport sizes.
 
 | Layer                       | Technology                                         |
 | --------------------------- | -------------------------------------------------- |
@@ -102,7 +109,8 @@ apps/web/       Interface, authentication client and public demo adapter
 apps/api/       Express routes, authorization and database access
  database/      PostgreSQL schema
  scripts/       Local startup, migration, test and export runners
- tests/         API/auth, full-app browser and public-demo tests
+ services/followup/  Optional Python ADK service and fictional evaluation cases
+ tests/         API/auth, ADK, full-app browser and public-demo tests
  docs/          Architecture, deployment, provenance and screenshots
 ```
 
