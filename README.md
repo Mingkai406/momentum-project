@@ -4,7 +4,10 @@
 
 [**Explore the demo ↗**](https://mingkai406.github.io/momentum-project/welcome/) · [Agent workflow](#from-progress-to-a-useful-follow-up) · [Engineering](#engineering) · [Run locally](#run-locally)
 
-![Momentum mentoring loop: capture student progress, prepare a source-linked agent draft, then review and share.](docs/readme/mentoring-flow.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/readme/mentoring-flow-dark.svg" />
+  <img src="docs/readme/mentoring-flow.svg" alt="Momentum mentoring loop: capture student progress, prepare a source-linked agent draft, then review and share." />
+</picture>
 
 ## Built around a real mentoring need
 
@@ -45,7 +48,10 @@ The assistant works on one student's goal at a time. It reads the plan, steps, c
 
 ## Engineering
 
-![Two-stage architecture: authorized snapshot to read-only ADK agent to draft; mentor confirmation to API permission, revision and replay checks to an atomic PostgreSQL write.](docs/readme/agent-boundaries.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/readme/agent-boundaries-dark.svg" />
+  <img src="docs/readme/agent-boundaries.svg" alt="Two-stage architecture: authorized snapshot to read-only ADK agent to draft; mentor confirmation to API permission, revision and replay checks to an atomic PostgreSQL write." />
+</picture>
 
 | Design choice                  | What it protects or enables                                                                                  |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------ |
